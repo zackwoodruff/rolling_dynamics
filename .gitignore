@@ -1,0 +1,9 @@
+*.asv
+*.mat
+*.m~
+*.avi
+*.png
+*.jpg
+autoGen_*.m
+.DS_Store
+
