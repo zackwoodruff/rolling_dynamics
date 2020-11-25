@@ -16,8 +16,28 @@ close all
 %% 1. Initialization 
 
 %% 1.1 Input Parameters
-%% 1.2 Object Geometry and Inertial Properties
-%% 1.3 Hand Geometry 
+    %param.options.model = 'ball-plate';
+    param.options.is_simplify = false;
+    param.options.is_generate_figures = false; 
+    param.options.friction_model = 'pure-rolling'; %'pure-rolling' or 'rolling';
+    %param.dynamics.gravity = 9.81; 
+    
+%% 1.2  Symbolic Variables 
+    syms uo_ vo_ uh_ vh_ psi_ real 
+    syms duo_ dvo_ duh_ dvh_ dpsi_ real
+    syms dduo_ ddvo_ dduh_ ddvh_ ddpsi_ real
+    param.variables.Uo_=[uo_; vo_];
+    param.variables.Uh_=[uh_; vh_];
+    param.variables.q_ = [uo_; vo_; uh_; vh_; psi_];
+    param.variables.dq_ = [duo_; dvo_; duh_; dvh_; dpsi_];
+    param.variables.ddq_ = [dduo_; ddvo_; dduh_; ddvh_; ddpsi_];
+    param.kinematics.differential_geometry.Rpsi_ = [cos(psi_),-sin(psi_);-sin(psi_),-cos(psi_)]; 
+    
+%% 1.3 Object Geometry and Inertial Properties
+
+
+    
+%% 1.4 Hand Geometry 
 
 
 %**********************************************
