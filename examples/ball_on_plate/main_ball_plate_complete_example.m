@@ -58,7 +58,15 @@ close all
 
     
 %% 1.4 Hand Geometry 
-
+    syms side_plate_ real
+    param.bodies.hand.parameters_h_ = side_plate_;
+    param.bodies.hand.parameters_h = 5; %0.2;  % 5;
+    param.bodies.hand.fh_=[uh_;vh_;0*uh_]; 
+    param.bodies.hand.u_range_h = [-param.bodies.hand.parameters_h,param.bodies.hand.parameters_h];
+    param.bodies.hand.v_range_h = [-param.bodies.hand.parameters_h,param.bodies.hand.parameters_h];
+    assumeAlso(uh_>param.bodies.hand.u_range_h(1) & uh_<param.bodies.hand.u_range_h(2))
+    assumeAlso(vh_>param.bodies.hand.v_range_h(1) & vh_<param.bodies.hand.v_range_h(2))
+    param.functions.ffh = @(uh,vh)[uh;vh;zeros(size(uh))];
 
 %**********************************************
 %% 2. Derive Kinematics
