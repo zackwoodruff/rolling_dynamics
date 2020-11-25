@@ -34,7 +34,27 @@ close all
     param.kinematics.differential_geometry.Rpsi_ = [cos(psi_),-sin(psi_);-sin(psi_),-cos(psi_)]; 
     
 %% 1.3 Object Geometry and Inertial Properties
+    syms radius_o_ real
+    param.bodies.object.parameters_o_ = [radius_o_];
+    param.bodies.object.parameters_o = [2];
+    %param.geo.rho_o = 0.035; % radius
+    %param.geo.rho_o = 2; % radius
+    param.bodies.object.fo_=[radius_o_*sin(uo_)*cos(vo_);radius_o_*sin(uo_)*sin(vo_);radius_o_*cos(uo_)]; % Sphere Shape description
+    param.functions.ffo=matlabFunction(subs(param.bodies.object.fo_,param.bodies.object.parameters_o_,param.bodies.object.parameters_o),'Vars',param.variables.Uo_);
+    param.bodies.object.u_range_o = [0, pi];
+    param.bodies.object.v_range_o = [-pi, pi];
+    assumeAlso(uo_>param.bodies.object.u_range_o(1) & uo_<param.bodies.object.u_range_o(2))
+    assumeAlso(vo_>param.bodies.object.v_range_o(1) & vo_<param.bodies.object.v_range_o(2))
 
+    % Inertia terms
+    %mass_o = 0.216; %kg
+    param.bodies.object.mass_o = 1; %kg
+    radius_o = param.bodies.object.parameters_o; 
+    inertia_o = 2/5 * param.bodies.object.mass_o * radius_o^2;
+    Io = eye(3) * inertia_o;   
+    Mo = eye(3) * param.bodies.object.mass_o; 
+    param.bodies.object.Go=[Io, zeros(3);...
+                            zeros(3) , Mo];
 
     
 %% 1.4 Hand Geometry 
