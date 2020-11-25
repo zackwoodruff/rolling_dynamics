@@ -6,42 +6,48 @@ function out = derive_local_contact_geometry_expressions(f, vars)
 
 
 %% A. Local Geometry of Smooth Bodies Expressions
-x=diff(f,vars(1)); % x_i direction
-y=diff(f,vars(2)); % y_i direction
-n=simplify(cross(x,y)/norm(cross(x,y))); % normal direction 
+x=diff(f,vars(1)); % x_i direction of contact frame
+y=diff(f,vars(2)); % y_i direction of contact frame
+n=simplify(cross(x,y)/norm(cross(x,y))); % normal vector of contact frame
 
-x_vector = simplify(x/norm(x)); % normalized x_i
-y_vector = simplify(y/norm(y)); % normalized y_i
-z_vector = n; % normal vector 
+x_hat = simplify(x/norm(x)); % normalized x_i of contact frame
+y_hat = simplify(y/norm(y)); % normalized y_i of contact frame
+z_hat = n; % normal vector of contact frame
 
 g11=simplify(dot(x,x));
+g22=simplify(dot(y,y));
+
+% Check that parameterization is orthogonal
 g12=simplify(dot(x,y));
 if g12~= 0
    g12
    warning('Surface parameterization is not orthogonal.')
    out=[]; 
-   out.y_adjusted =simplify(y-(g12/g11)*x_vector); 
+   out.y_adjusted =simplify(y-(g12/g11)*x_hat); 
    norm_y_adjusted = simplify(norm(out.y_adjusted));
    out.y_vector_adjusted = simplify(out.y_adjusted/norm_y_adjusted);
-   Toici=[x_vector,out.y_vector_adjusted,z_vector,[f(1);f(2);f(3)];0,0,0,1]; %Old name "Trans"
+   Rici_ = [x_hat,out.y_vector_adjusted,z_hat];
 else
-   Toici=[x_vector,y_vector,z_vector,[f(1);f(2);f(3)];0,0,0,1]; %Old name "Trans"
+   Rici_ = [x_hat,y_hat,z_hat];
 end
-g22=simplify(dot(y,y));
+Tici_=[Rici_,f;[0,0,0,1]];
+
 G=simplify([g11,g12; g12,g22]);
-Ginv=inv(G); % For orthogonal coordinate system, G is diagonal
+G_inverse=inv(G); % For orthogonal coordinate system, G is diagonal
 sigma = simplify(sqrt(G(2,2)/G(1,1)));
 
-
+sqrtG = sqrt(G);
+    
 %% B. Second Order Kinematics Expressions
 % Initialize Christoffel Functions
 christoffel1 = @(i,j,k,vars,xlist) dot(diff(xlist{i},vars(j)),xlist{k});
-christoffel = @(i,j,k,G,vars,xlist) christoffel1(i,j,1,vars,xlist)*Ginv(1,k)...
-                                   +christoffel1(i,j,2,vars,xlist)*Ginv(2,k);
+christoffel = @(i,j,k,G,vars,xlist) christoffel1(i,j,1,vars,xlist)*G_inverse(1,k)...
+                                   +christoffel1(i,j,2,vars,xlist)*G_inverse(2,k);
 % Calculate second order kinematics expressions
 xlist{1} = x; 
 xlist{2} = y; 
 
+% Gamma Expressions 
 Gamma112 = christoffel(1,1,2,G,vars,xlist);
 Gamma122 = christoffel(1,2,2,G,vars,xlist);
 Gamma = [Gamma112, Gamma122]; 
@@ -80,26 +86,30 @@ Lbarbar=[LbarbarA;LbarbarB];
 
     
 %% Variables to export
-out.G=G;
-out.Ginv=Ginv;
-out.sigma = sigma;
+out.G_=G;
+out.G_inverse_=G_inverse;
+out.sqrtG_ = sqrtG; 
+out.sigma_ = sigma;
 
-out.x_vector = x_vector;
-out.y_vector = y_vector;
-out.z_vector = z_vector;
-out.Toici = Toici; 
+out.x_hat_ = x_hat;
+out.y_hat_ = y_hat;
+out.z_hat_ = z_hat;
+out.Tici_ = Tici_; 
 
-out.x = x;
-out.y = y;
-out.n = n; 
+out.x_ = x;
+out.y_ = y;
+out.n_ = n; 
 
-out.Gamma=Gamma;
-out.Gammabar=Gammabar;
-out.Gammabarbar=Gammabarbar;
+out.Gamma_=Gamma;
+out.Gammabar_=Gammabar;
+out.Gammabarbar_=Gammabarbar;
 
-out.L=L;
-out.Lbar=Lbar;
-out.Lbarbar=Lbarbar;
+out.L_=L;
+out.Lbar_=Lbar;
+out.Lbarbar_=Lbarbar;
+
+sqrtG_inverse_ = inv(sqrtG);
+out.H_ = sqrtG_inverse_ * L * sqrtG_inverse_;
 
 
 end

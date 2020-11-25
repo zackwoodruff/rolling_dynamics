@@ -36,12 +36,12 @@ close all
 %**********************************************
 %% 2.1 Contact Geometry
 % From Appendix B-A
-
-% param.kinematics.local_geometry.object = 
+clc
 %   param.geo.geometry_o = diffgeo2(param.geo.fo_,param.geo.Uo_);
+param.kinematics.local_geometry.object = derive_local_contact_geometry_expressions(param.bodies.object.fo_,param.variables.Uo_);
 
 
-% param.kinematics.geometry.hand =
+param.kinematics.local_geometry.hand = derive_local_contact_geometry_expressions(param.bodies.hand.fh_,param.variables.Uh_);
 %    param.geo.geometry_h = diffgeo2(param.geo.fh_,param.geo.Uh_);
 
 % param.kinematics.geometry = 
@@ -50,7 +50,8 @@ close all
 % Get rid of this? 
 %geometry_oh = parse_object_geometries(param.geo.geometry_o,param.geo.geometry_h);
 
-
+param.kinematics.local_geometry.object
+param.kinematics.local_geometry.hand
 %% 2.2 First Order Kinematics
 % Return: K1
 %param.kinematics.local_geometry.Rpsi_ = [cos(param.variables.q_(5)),-sin(param.variables.q_(5));-sin(param.variables.q_(5)),-cos(param.variables.q_(5))]; 
