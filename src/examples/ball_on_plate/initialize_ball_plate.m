@@ -16,7 +16,6 @@ function param = initialize_ball_plate(param)
     param.variables.q_ = [uo_; vo_; uh_; vh_; psi_];
     param.variables.dq_ = [duo_; dvo_; duh_; dvh_; dpsi_];
     param.variables.ddq_ = [dduo_; ddvo_; dduh_; ddvh_; ddpsi_];
-    param.kinematics.differential_geometry.Rpsi_ = [cos(psi_),-sin(psi_);-sin(psi_),-cos(psi_)]; 
     
     
 %% 1.2.2 Object Geometry and Inertial Properties

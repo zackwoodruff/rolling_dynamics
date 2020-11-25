@@ -5,16 +5,17 @@
 % This code demonstrates derives the rolling dynamics equations for a
 % ball (sphere) on a plate (plane) and does an open-loop simulation. 
 
-% Add the src scripts to the path 
-addpath(genpath('../../src/'))
+% Add the src folders to the path 
+addpath(genpath('../../'))
 
 clear
 clc
 close all
 
-%**********************************************
-%% 1. Initialization 
 
+%**********************************************
+% 1. Initialization 
+%**********************************************
 %% 1.1 Input Parameters
     %param.options.model = 'ball-plate';
     param.options.is_simplify = false;
@@ -29,29 +30,62 @@ close all
     param = initialize_ball_plate(param);
 
 
+    
 %**********************************************
-%% 2. Derive Kinematics
-%% 2.1 Differential Geometry
+% 2. Derive Kinematics
+%**********************************************
+%% 2.1 Contact Geometry
+% From Appendix B-A
+
+% param.kinematics.local_geometry.object = 
+%   param.geo.geometry_o = diffgeo2(param.geo.fo_,param.geo.Uo_);
+
+
+% param.kinematics.geometry.hand =
+%    param.geo.geometry_h = diffgeo2(param.geo.fh_,param.geo.Uh_);
+
+% param.kinematics.geometry = 
+
+
+% Get rid of this? 
+%geometry_oh = parse_object_geometries(param.geo.geometry_o,param.geo.geometry_h);
+
+
 %% 2.2 First Order Kinematics
 % Return: K1
+%param.kinematics.local_geometry.Rpsi_ = [cos(param.variables.q_(5)),-sin(param.variables.q_(5));-sin(param.variables.q_(5)),-cos(param.variables.q_(5))]; 
 
 %% 2.3 Second Order Kinematics
 % Return: K2, K3, K4
 
+
+
 %**********************************************
-%% 3. Derive Dynamics
+% 3. Derive Dynamics
+%**********************************************
+%% 3.1
 % Return K5, K6 (K7 and K8 if full derivation) 
 %param.dynamics.gravity = 9.81; 
 
+
+
 %**********************************************
-%% 4. Open Loop Simulation
+% 4. Open Loop Simulation
+%**********************************************
+%% 4.1
 %Simulate using either the full dynamics or the partial dynamics 
 
-%**********************************************
-%% 5. Visualize Results
 
 
 %**********************************************
-%% 6. Analyze Results 
+% 5. Visualize Results
+%**********************************************
+%% 5.1 
 
+
+
+%**********************************************
+% 6. Analyze Results 
+%**********************************************
+%% 6.1
 
