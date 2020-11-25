@@ -53,4 +53,12 @@ function param = initialize_ball_plate(param)
     assumeAlso(uh_>param.bodies.hand.u_range_h(1) & uh_<param.bodies.hand.u_range_h(2))
     assumeAlso(vh_>param.bodies.hand.v_range_h(1) & vh_<param.bodies.hand.v_range_h(2))
     param.functions.ffh = @(uh,vh)[uh;vh;zeros(size(uh))];
+
+
+%% 1.2.4 Combined Parameters 
+% Constant parameters in the parameterizations ffo and ffh
+param.bodies.P_ = [param.bodies.object.parameters_o_; param.bodies.hand.parameters_h_];
+param.bodies.P  = [param.bodies.object.parameters_o; param.bodies.hand.parameters_h];     
+assumeAlso(param.bodies.P_>0) % constant parameters are all positive
+    
 end

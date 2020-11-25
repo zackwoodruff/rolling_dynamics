@@ -20,7 +20,7 @@ close all
     param.options.is_simplify = false;
     param.options.is_generate_figures = false; 
     param.options.friction_model = 'pure-rolling'; %'pure-rolling' or 'rolling';
-    %param.dynamics.gravity = 9.81; 
+    
     
 %% 1.2 Initialize:
     %       -1.2.1 Rolling Configuration Variables, 
@@ -41,7 +41,7 @@ close all
 %**********************************************
 %% 3. Derive Dynamics
 % Return K5, K6 (K7 and K8 if full derivation) 
-
+%param.dynamics.gravity = 9.81; 
 
 %**********************************************
 %% 4. Open Loop Simulation
