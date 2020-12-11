@@ -55,9 +55,9 @@ function param = initialize_ball_plate(param)
 
 
 %% 1.2.4 Combined Parameters 
-% Constant parameters in the parameterizations ffo and ffh
-param.bodies.P_ = [param.bodies.object.parameters_o_; param.bodies.hand.parameters_h_];
-param.bodies.P  = [param.bodies.object.parameters_o; param.bodies.hand.parameters_h];     
-assumeAlso(param.bodies.P_>0) % constant parameters are all positive
+    % Constant parameters in the parameterizations ffo and ffh
+    param.bodies.P_ = [param.bodies.object.parameters_o_; param.bodies.hand.parameters_h_];
+    param.bodies.P  = [param.bodies.object.parameters_o; param.bodies.hand.parameters_h];     
+    assumeAlso(param.bodies.P_>0) % constant parameters are all positive
     
 end
