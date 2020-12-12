@@ -114,22 +114,22 @@ disp('Calculating Second-Order Kinematics...')
 
 
 %% Save into functions and symbolic fields  
-    if param.options.is_simplify    
-        param.kinematics.K2_ = simplify(K2_);
-        param.kinematics.K3_ = simplify(K3_);
-    else
-        param.kinematics.K3_ = (K3_);
-        param.kinematics.K2_ = (K2_);
-    end
 
     % Full second-order kinematics equation
     second_order_kinematics_ = (K2_+K3_*[Alpha_;ax_; ay_; az_]); 
+    
     if param.options.is_simplify
-       %alpha_z = simplify(alpha_z); 
-       param.kinematics.second_order_kinematics_ = simplify(second_order_kinematics_);
+        param.kinematics.K2_ = simplify(K2_);
+        param.kinematics.K3_ = simplify(K3_);
+        param.kinematics.second_order_kinematics_ = simplify(second_order_kinematics_);
+        param.kinematics.axyz_ = simplify([ax_;ay_;az_]);
+        %alpha_z = simplify(alpha_z);
     else
-        %alpha_z=alpha_z;
+        param.kinematics.K3_ = (K3_);
+        param.kinematics.K2_ = (K2_);
         param.kinematics.second_order_kinematics_=second_order_kinematics_;
+        param.kinematics.axyz_ = [ax_;ay_;az_];
+        %alpha_z=alpha_z;
     end
     
     disp('    DONE: Calculating Second-Order Kinematics.')
