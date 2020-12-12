@@ -106,7 +106,7 @@ disp('Calculating Second-Order Kinematics...')
     az_ = Lo_bar_*Wo_+Lh_bar_*Wh_+2*(E1'*omega_xy_)'*Rpsi_*sqrtGo_*dUo_; % Non-breaking contact constraint 
     
     % Rotational acceleration constraints (pure-rolling) (TODO: EQ 45?)
-    %alpha_z = ((E1*omega_xy_).'*Rpsi_*E1*inv(sqrtGo_)*Lo_*dUo_);
+    alpha_z_ = ((E1*omega_xy_).'*Rpsi_*E1*inv(sqrtGo_)*Lo_*dUo_);
 
     
 %% Relative Acceleration Expressions?
@@ -123,13 +123,13 @@ disp('Calculating Second-Order Kinematics...')
         param.kinematics.K3_ = simplify(K3_);
         param.kinematics.second_order_kinematics_ = simplify(second_order_kinematics_);
         param.kinematics.axyz_ = simplify([ax_;ay_;az_]);
-        %alpha_z = simplify(alpha_z);
+        param.kinematics.alpha_z_ = simplify(alpha_z_);
     else
         param.kinematics.K3_ = (K3_);
         param.kinematics.K2_ = (K2_);
         param.kinematics.second_order_kinematics_=second_order_kinematics_;
         param.kinematics.axyz_ = [ax_;ay_;az_];
-        %alpha_z=alpha_z;
+        param.kinematics.alpha_z_=alpha_z_;
     end
     
     disp('    DONE: Calculating Second-Order Kinematics.')
