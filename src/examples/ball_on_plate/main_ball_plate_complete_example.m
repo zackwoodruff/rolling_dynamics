@@ -6,6 +6,7 @@
 % ball (sphere) on a plate (plane) and does an open-loop simulation. 
 
 % Add the src folders to the path 
+tic
 addpath(genpath('../../'))
 
 clear
@@ -18,7 +19,7 @@ close all
 %**********************************************
 %% 1.1 Input Parameters
 %param.options.model = 'ball-plate';
-param.options.is_simplify = false;
+param.options.is_simplify = true;
 param.options.is_generate_figures = false; 
 param.options.friction_model = 'pure-rolling'; %'pure-rolling' or 'rolling';
     
@@ -50,16 +51,19 @@ param.kinematics.local_geometry.hand = ...
 
 
 %% 2.2 First Order Kinematics
+% From Appendix B-B
 %**Return K1 and K1*Omega_ and relative velocity from dq expressions
 % and functions
 param = derive_first_order_kinematics(param);
 
 
 %% 2.3 Second Order Kinematics
-% Return: K2, K3, K4
+% From Appendix B-C
+% Return: K2_, K3_, Axyz_rolling_, alpha_z_pure_rolling_, second order kinematics_ , K4_, 
+ param = derive_second_order_kinematics(param);
 
-
-
+ 
+%% 
 %**********************************************
 % 3. Derive Dynamics
 %**********************************************
