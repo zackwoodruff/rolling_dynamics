@@ -69,10 +69,11 @@ param = derive_first_order_kinematics(param);
 %**********************************************
 %% 3.1
 % Return K5, K6 (K7 and K8 if full derivation) 
-%param.dynamics.gravity = 9.81; 
+param.dynamics.gravity = 9.81; 
+param = derive_rolling_dynamics(param);
 
 
-
+toc
 %**********************************************
 % 4. Open Loop Simulation
 %**********************************************
