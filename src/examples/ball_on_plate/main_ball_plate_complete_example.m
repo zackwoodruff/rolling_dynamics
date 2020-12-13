@@ -85,9 +85,7 @@ param.options.is_fast_dynamics = true;
 param.options.export_directory = pwd; 
 export_dynamics_functions(param)
 
-% Equations used by 
-% f_dynamics_handler
-
+% Equations used by f_dynamics_handler.m
 
 
 %**********************************************
@@ -103,43 +101,51 @@ export_dynamics_functions(param)
 
 % Simulate Dynamic Rolling
 disp('Simulating dynamic rolling...')
-param.options.ode_options = odeset('RelTol',1e-6,'AbsTol',1e-8); % set max step size
-%param.options.ode_options = odeset('RelTol',1e-12,'AbsTol',1e-12); % set max step size
 
+% Time and integration tolerances
+param.sim.dt = 0.01;
+param.sim.T = 2*pi; 
+param.sim.tvec = 0:param.sim.dt:param.sim.T ;
+param.sim.tvec_u = param.sim.tvec;
+param.sim.ode_options = odeset('RelTol',1e-6,'AbsTol',1e-8); % set max step size
 
 % Initial Conditions
 param.options.is_inclined = true; 
 if param.options.is_inclined
-    param.mpp.Xh0 = [0.1; zeros(5,1)];
+    param.sim.Xh0 = [0.1; zeros(5,1)];
 else
-    param.mpp.Xh0 = [0; zeros(5,1)];
+    param.sim.Xh0 = [0; zeros(5,1)];
 end
-param.mpp.q0 = [pi/2; 0; 0; 0; 0];
+param.sim.q0 = [pi/2; 0; 0; 0; 0];
+param.sim.Vh0 = [0; 0; 7; 0; 0; 0];
+param.sim.omega_xyz0 = [1;0; -7];
 
-param.mpp.Vh0 = [0; 0; 7; 0; 0; 0];
-omega_xyz0 = [1;0; -7];
-param.mpp.dq0 = double(subs(param.kinematics.first_order_kinematics_, [param.bodies.P_;param.variables.q_;param.variables.Omega_],...
-                              [param.bodies.P;param.mpp.q0;omega_xyz0]));
+param.sim.dq0 = double(subs(param.kinematics.first_order_kinematics_,...
+            [param.bodies.P_; param.variables.q_; param.variables.Omega_],...
+            [param.bodies.P;  param.sim.q0;       param.sim.omega_xyz0]));
+param.sim.states0 = [param.sim.Xh0; param.sim.q0; param.sim.Vh0; param.sim.dq0];
 
+% Controls
+param.sim.controls_t = zeros([6,length(param.sim.tvec_u)]);
 
-param.mpp.states0 = [param.mpp.Xh0; param.mpp.q0; param.mpp.Vh0; param.mpp.dq0];
-
-disp('Simulating dynamic rolling...')
+% Friction type
 if strcmp(param.options.friction_model,'rolling')
-    rolling_type_num = 1; % (1) Rolling, (2) Pure Rolling
+    param.sim.friction_model_num = 1; % (1) Rolling, 
 elseif strcmp(param.options.friction_model,'pure-rolling')
-    rolling_type_num = 2;
+    param.sim.friction_model_num = 2; % (2) Pure Rolling
 else
     warning('INVALID FRICTION MODEL TYPE');
 end
-options = param.options.ode_options;
-dt = 0.01; 
-tvec = 0:dt:2*pi;
-tvec_u = tvec;
-controls_t = zeros([6,length(tvec_u)]);
-states0 = param.mpp.states0;
+
+% Run Simulation
 tic
-[~,states] = ode45(@(t,states) f_dynamics_handler(t,states,controls_t,tvec_u,rolling_type_num), tvec, states0, options);
+[~,param.sim.states_t] = ode45(@(t,states) f_dynamics_handler(t,states,...
+        param.sim.controls_t,...
+        param.sim.tvec_u,...
+        param.sim.friction_model_num),...
+        param.sim.tvec,...
+        param.sim.states0,...
+        param.sim.ode_options);
 toc
 disp('    DONE: Simulating dynamic rolling.')
 
@@ -187,12 +193,12 @@ ylabel('$y$ (m)', 'interpreter','latex')%,'Position',[-0.2639    0.0134   -0.146
 zlabel('$z$ (m)', 'interpreter','latex')
 
 show_contact = true; 
-resolution = round(length(tvec)/100); 
-for i= 1:resolution:length(states)
-    q_ti = states(i,7:11)';
+resolution = round(length(param.sim.tvec)/100); 
+for i= 1:resolution:length(param.sim.states_t)
+    q_ti = param.sim.states_t(i,7:11)';
     
     % Update hand
-    Tsh_ti = param.functions.fTsh(states(i,1:6)'); % Hand location {h} in world frame {s}
+    Tsh_ti = param.functions.fTsh(param.sim.states_t(i,1:6)'); % Hand location {h} in world frame {s}
     Tsch_ti = Tsh_ti*param.functions.fThch(q_ti); % Hand contact location {c_h} in world frame {s}
     update_object_hand(objects.x_h, objects.y_h, objects.z_h, objects.S_h, Tsh_ti) % update hand
     update_frame(objects.frame_Ch,objects.surf_Ch,Tsch_ti) % Contact frame {c_h}
@@ -215,7 +221,7 @@ for i= 1:resolution:length(states)
            h_contact.ZData=[h_contact.ZData, Tsch_ti(3,4)];
         end
     end
-    title({[],['t = ' num2str((i-1)*dt,'%.2f')]})
+    title({[],['t = ' num2str((i-1)*param.sim.dt,'%.2f')]})
     drawnow
     %pause(0.1)
 end
