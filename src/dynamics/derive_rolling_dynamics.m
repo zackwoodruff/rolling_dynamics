@@ -45,9 +45,6 @@ Kh_ = KfromR(Rsh_euler_,Phi_h_);
 dxddx_hand=simplify([inv(Kh_)*omega_h_;...    % Rotational velocities  inv(Kh_) * omega_h_ = dPhi_h_
                     Rsh_euler_ * v_h_;... % Linear velocities in space frame 
                     dVh_]);                  % Accelerations
-param.dynamics.dxddx_hand = dxddx_hand; 
-%matlabFunction(dxddx_hand,'file',[dir, 'autoGen_f_handDynamics_fast'],'Vars',{t_, states_hand_, dV_h_});
-
 
 
 
@@ -152,15 +149,28 @@ elseif strcmp(friction_model,'pure-rolling') % Pure Rolling (Eq 9)
     K6_ = subs(RHS1_ - Ad_Toch_(:,3:6)*dVrel(3:6) + a_(:,1:2) * ch_F_contact(1:2), P_,P); 
 end
 
+%% Expressions to Export 
+
+
 if param.options.is_simplify
-    K5_ = simplify(K5_);
-    K6_ = simplify(K6_);
-    Ad_Toh_ = simplify(Ad_Toh_);
+    param.dynamics.K5_ = simplify(subs(K5_, P_,P));
+    param.dynamics.K6_ = simplify(subs(K6_, P_,P));
+    param.dynamics.Ad_Toh_ = simplify(subs(Ad_Toh_, P_,P));
+else
+    param.dynamics.K5_ = subs(K5_, P_,P);
+    param.dynamics.K6_ = subs(K6_, P_,P);
+    param.dynamics.Ad_Toh_ = subs(Ad_Toh_, P_,P);
 end
 
-param.dynamics.K5_ = K5_;
-param.dynamics.K6_ = K6_;
-param.dynamics.Ad_Toh_ = Ad_Toh_;
+param.variables.states_hand_ = states_hand_; % full hand state
+param.variables.dVh_ = dVh_; % full hand controls
+param.dynamics.dxddx_hand = dxddx_hand; % full hand dynamics 
+%matlabFunction(dxddx_hand,'file',[dir, 'autoGen_f_handDynamics_fast'],'Vars',{t_, states_hand_, dV_h_});
+
+% Transformation matrix functions 
+param.functions.fTho = matlabFunction(subs(Tho_,param.bodies.P_,param.bodies.P), 'vars',{param.variables.q_});
+param.functions.fThch = matlabFunction(subs(Thch_,param.bodies.P_,param.bodies.P), 'vars',{param.variables.q_});
+param.functions.fThco = matlabFunction(subs(Thch_*Tcho_,param.bodies.P_,param.bodies.P), 'vars',{param.variables.q_});
 
 
 %% Return
