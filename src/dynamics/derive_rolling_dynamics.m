@@ -163,6 +163,7 @@ else
 end
 
 param.variables.states_hand_ = states_hand_; % full hand state
+param.variables.states_ = [states_hand_(1:6); param.variables.q_; states_hand_(7:12); param.variables.dq_];
 param.variables.dVh_ = dVh_; % full hand controls
 param.dynamics.dxddx_hand = dxddx_hand; % full hand dynamics 
 %matlabFunction(dxddx_hand,'file',[dir, 'autoGen_f_handDynamics_fast'],'Vars',{t_, states_hand_, dV_h_});
