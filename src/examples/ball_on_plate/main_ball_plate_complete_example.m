@@ -72,9 +72,15 @@ param = derive_first_order_kinematics(param);
 param.dynamics.gravity = 9.81; 
 param = derive_rolling_dynamics(param);
 
+% TODO: 
+% - add full derivation of alpha_z
 
 
 %% Export dynamics functions
+% TODO:
+% - Add derivation of full dynamics
+% - put into it's own function 
+
 directory = pwd; % Export functions to the home directory 
 is_optimize = param.options.is_simplify; % Should we optimize the exported functions? 
     
@@ -122,6 +128,10 @@ end
 %**********************************************
 %% 4.1
 %Simulate using either the full dynamics or the partial dynamics 
+
+% TODO: 
+% - Clean up dynamics section (put in new function?)
+% - Add handling for full dynamics function to dynamics_handler 
 
 % Simulate Dynamic Rolling
 disp('Simulating dynamic rolling...')
@@ -171,11 +181,9 @@ disp('    DONE: Simulating dynamic rolling.')
 %**********************************************
 %% 5.1 
 
-% Plot Results 
-figure(1); clf
-plot(states(:,7:11))
-
-
+% TODO: 
+% - Move visualization to new function
+% - Minimize use of additional functions 
 
 % 
  Rsh_ = fEulerToR(states_(1:3),'XYZ');
@@ -251,4 +259,5 @@ end
 % 6. Analyze Results 
 %**********************************************
 %% 6.1
-
+% TODO: 
+% - Add code to analyze the output trajectory 
