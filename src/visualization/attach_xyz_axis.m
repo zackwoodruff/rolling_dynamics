@@ -14,9 +14,12 @@ if nargin<3
     axis_colors={'red','green','blue'};
 end
 
-[X_x,X_y,X_z]=cylinder(cylinder_width);X_z=X_z*axis_scale;
-[Y_x,Y_y,Y_z]=cylinder(cylinder_width);Y_z=Y_z*axis_scale;
-[Z_x,Z_y,Z_z]=cylinder(cylinder_width);Z_z=Z_z*axis_scale;
+[X_x,X_y,X_z]=cylinder(cylinder_width);
+X_z=X_z*axis_scale;
+[Y_x,Y_y,Y_z]=cylinder(cylinder_width);
+Y_z=Y_z*axis_scale;
+[Z_x,Z_y,Z_z]=cylinder(cylinder_width);
+Z_z=Z_z*axis_scale;
 
 y_axis_trans = [1,0,0,0;0,cos(-pi/2),-sin(-pi/2),0;0,sin(-pi/2), cos(-pi/2),0;0,0,0,1];
 x_axis_trans = [cos(pi/2),0,sin(pi/2),0;0,1,0,0;-sin(pi/2),0,cos(pi/2),0;0,0,0,1];

@@ -73,9 +73,8 @@ dxddx_hand=simplify([inv(Kh_)*omega_h_;...    % Rotational velocities  inv(Kh_) 
     
     Tcho_ = TransInv(Toch_);
     Toh_ = simplify(Toco_ * TransInv(Tchco_) * TransInv(Thch_)); 
-       
-    % Make functions here? 
-  
+ 
+
 %% Calculating Equation 7 from paper
 
 % Include rolling/pure rolling acceleration constraints 
@@ -173,6 +172,10 @@ param.functions.fTho = matlabFunction(subs(Tho_,param.bodies.P_,param.bodies.P),
 param.functions.fThch = matlabFunction(subs(Thch_,param.bodies.P_,param.bodies.P), 'vars',{param.variables.q_});
 param.functions.fThco = matlabFunction(subs(Thch_*Tcho_,param.bodies.P_,param.bodies.P), 'vars',{param.variables.q_});
 
+Rsh_ = fEulerToR(param.variables.states_(1:3),'XYZ');
+psh_ =  param.variables.states_(4:6);
+Tsh_ = RpToTrans(Rsh_,psh_);
+param.functions.fTsh = matlabFunction(Tsh_,'vars',{param.variables.states_(1:6)});
 
 %% Return
 disp('    DONE: Calculating Rolling Dynamics.')
