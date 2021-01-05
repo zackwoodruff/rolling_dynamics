@@ -96,10 +96,6 @@ export_dynamics_functions(param)
 % From Section V.C
 %Simulate using either the full dynamics or the partial dynamics 
 
-% TODO: 
-% - Clean up dynamics section (put in new function?)
-% - Add handling for full dynamics function to dynamics_handler 
-
 % Simulate Dynamic Rolling
 disp('Simulating dynamic rolling...')
 
@@ -129,26 +125,9 @@ param.sim.states0 = [param.sim.Xh0; param.sim.q0; param.sim.Vh0; param.sim.dq0];
 % Controls
 param.sim.controls_t = zeros([6,length(param.sim.tvec_u)]);
 
-% Friction type
-if strcmp(param.options.friction_model,'rolling')
-    param.sim.friction_model_num = 1; % (1) Rolling, 
-elseif strcmp(param.options.friction_model,'pure-rolling')
-    param.sim.friction_model_num = 2; % (2) Pure Rolling
-else
-    warning('INVALID FRICTION MODEL TYPE');
-end
+% Simulate rolling dyanmics
+param.sim.states_t = run_dynamic_rolling_simulation(param);
 
-% Run Simulation
-tic
-[~,param.sim.states_t] = ode45(@(t,states) f_dynamics_handler(t,states,...
-        param.sim.controls_t,...
-        param.sim.tvec_u,...
-        param.sim.friction_model_num,...
-        param.options.is_fast_dynamics),...
-        param.sim.tvec,...
-        param.sim.states0,...
-        param.sim.ode_options);
-toc
 disp('    DONE: Simulating dynamic rolling.')
 
 
