@@ -1,4 +1,4 @@
-function [dx] = f_dynamics_handler(t,x,u,tvec_u,rolling_type_num)
+function [dx] = f_dynamics_handler(t,x,u,tvec_u,rolling_type_num,is_fast_dynamics)
 % f_dynamics_handler 
 % This contains the dynamics equations for a hand and an object in rolling
 % contact. The hand is directly controlled, the object is subject to the
@@ -49,11 +49,10 @@ else
     b_dV_o2 = u; % for matrix or constant control input
 end
 
-is_single_equation = false;
-if is_single_equation
-    %dx = autoGen_f_full_dynamics_new(t,x,b_dV_o2);
-    warning("NOT DEFINED");
-else
+
+if ~is_fast_dynamics % Fast dynamics in a single equation (Eq. (12))
+    dx = autoGen_f_full_dynamics(t,x,b_dV_o2);
+else 
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Hand Dynamics
@@ -65,7 +64,7 @@ else
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Object Dynamics
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
-    %% Relative Accelerations
+    % Relative Accelerations
     %rolling_type_num = 1; % (1) Rolling, (2) Pure Rolling
     alphax=zeros(1,N);
     alphay=zeros(1,N); 
@@ -93,11 +92,11 @@ else
     end
 
 
-    %% Second Order Kinematics 
+    % Second Order Kinematics 
     ddq = autoGen_f_second_order_kinematics(t,[q;dq],[alphax;alphay;alphaz]);
 
 
-    %% Extract States 
+    % Extract States 
     dx = zeros(22,N); 
     dx(1:6,:)  = ddHand(1:6,:);
     dx(7:11,:) = dq; 

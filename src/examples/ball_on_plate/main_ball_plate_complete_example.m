@@ -22,7 +22,7 @@ close all
 param.options.is_simplify = true;
 param.options.is_generate_figures = false; 
 param.options.friction_model = 'pure-rolling'; %'pure-rolling' or 'rolling';
-    
+param.options.is_fast_dynamics = true; 
     
 %% 1.2 Initialize:
 %-1.2.1 Rolling Configuration Variables, 
@@ -71,21 +71,18 @@ param = derive_first_order_kinematics(param);
 % From Section V.A
 % Return K5, K6 (K7 and K8 if full derivation) 
 param.dynamics.gravity = 9.81; 
-param.options.is_fast_dynamics = false; 
-
 param = derive_rolling_dynamics(param);
 
 % TODO: 
 % - add full derivation of alpha_z
+% -Add status printing to command line 
 
 %% 3.2 Export dynamics functions
 % From Section V.B
 % Equations used by f_dynamics_handler.m
 
 % TODO:
-% - Add export
-
-
+% -Add status printing to command line 
 param.options.export_directory = pwd; 
 export_dynamics_functions(param)
 
@@ -146,7 +143,8 @@ tic
 [~,param.sim.states_t] = ode45(@(t,states) f_dynamics_handler(t,states,...
         param.sim.controls_t,...
         param.sim.tvec_u,...
-        param.sim.friction_model_num),...
+        param.sim.friction_model_num,...
+        param.options.is_fast_dynamics),...
         param.sim.tvec,...
         param.sim.states0,...
         param.sim.ode_options);
