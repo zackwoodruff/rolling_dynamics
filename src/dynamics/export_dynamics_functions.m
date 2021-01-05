@@ -1,4 +1,5 @@
 function export_dynamics_functions(param)
+disp('Exporting rolling dynamics functions...')
 
 export_directory = param.options.export_directory; % Export functions to the home directory 
 is_optimize = param.options.is_simplify; % Should we optimize the exported functions? 
@@ -36,21 +37,19 @@ if param.options.is_fast_dynamics
         'Optimize',is_optimize,'Vars',{q_});
     
 else
-    warning('ENTER FULL DYNAMICS DERIVATION HERE')
-    matlabFunction(param.dynamics.full_dynamics_,'file',[export_directory, '\autoGen_f_full_dynamics'],'Vars',...
-                                                    {t_, states_, controls_});            
+    % Full object and hand dynamics 
+    matlabFunction(param.dynamics.full_dynamics_,...
+        'file', [export_directory, '\autoGen_f_full_dynamics'],...
+        'Vars', {t_, states_, controls_});            
+end
+
+
+%% Return
+disp('    DONE.');
+
 end
 
 
 
 
 
-
-
-
-
-
-
-
-
-end

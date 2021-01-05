@@ -8,6 +8,7 @@
 % Add the src folders to the path 
 tic
 addpath(genpath('../../'))
+set(0,'DefaultFigureWindowStyle','normal')
 
 clear
 clc
@@ -20,8 +21,8 @@ close all
 %% 1.1 Input Parameters
 %param.options.model = 'ball-plate';
 param.options.is_simplify = true;
-param.options.is_generate_figures = false; 
-param.options.friction_model = 'pure-rolling'; %'pure-rolling' or 'rolling';
+%param.options.is_generate_figures = false; 
+param.options.friction_model = 'rolling'; %'pure-rolling' or 'rolling';
 param.options.is_fast_dynamics = true; 
     
 %% 1.2 Initialize:
@@ -37,17 +38,17 @@ param = initialize_ball_plate(param);
 %**********************************************
 %% 2.1 Contact Geometry
 % From Appendix B-A
-
+disp('Calculating symbolic local contact geometry expressions...') 
 % Object Geometry:
-%   param.geo.geometry_o = diffgeo2(param.geo.fo_,param.geo.Uo_);
 param.kinematics.local_geometry.object = ...
     derive_local_contact_geometry_expressions(param.bodies.object.fo_,...
                                               param.variables.Uo_);
-
 % Hand Geometry:
 param.kinematics.local_geometry.hand = ...
     derive_local_contact_geometry_expressions(param.bodies.hand.fh_,...
                                               param.variables.Uh_);
+                                          
+disp('    DONE.');
 
 
 %% 2.2 First Order Kinematics
@@ -75,18 +76,13 @@ param = derive_rolling_dynamics(param);
 
 % TODO: 
 % - add full derivation of alpha_z
-% -Add status printing to command line 
+
 
 %% 3.2 Export dynamics functions
 % From Section V.B
 % Equations used by f_dynamics_handler.m
-
-% TODO:
-% -Add status printing to command line 
 param.options.export_directory = pwd; 
 export_dynamics_functions(param)
-
-
 
 
 %**********************************************
@@ -94,9 +90,7 @@ export_dynamics_functions(param)
 %**********************************************
 %% 4.1
 % From Section V.C
-%Simulate using either the full dynamics or the partial dynamics 
-
-% Simulate Dynamic Rolling
+%Simulate rolling using either the full dynamics or the partial dynamics 
 disp('Simulating dynamic rolling...')
 
 % Time and integration tolerances
@@ -128,13 +122,15 @@ param.sim.controls_t = zeros([6,length(param.sim.tvec_u)]);
 % Simulate rolling dyanmics
 param.sim.states_t = run_dynamic_rolling_simulation(param);
 
-disp('    DONE: Simulating dynamic rolling.')
+disp('    DONE.');
 
 
 %%
 %**********************************************
 % 5. Visualize Results
 %**********************************************
+disp('Visualizing rolling trajectory...')
+
 % Set Options
 param.options.visualization.xlim = [-8,8];
 param.options.visualization.ylim = [-7,7];
@@ -150,6 +146,7 @@ param.options.visualization.export_figure_name='plate_ball_spin';
 % Visualize dynamic rolling trajectory  
 visualize_trajectory(param)
 
+disp('    DONE.');
 
 
 %%

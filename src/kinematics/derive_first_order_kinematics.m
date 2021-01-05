@@ -1,7 +1,7 @@
 function param = derive_first_order_kinematics(param) 
 
 % From Appendix B-B
-disp('Calculating First-Order Kinematics...')
+disp('Calculating first-order kinematics...')
 
 % Return: K1
 param.kinematics.local_geometry.Rpsi_ = [cos(param.variables.q_(5)),-sin(param.variables.q_(5));-sin(param.variables.q_(5)),-cos(param.variables.q_(5))]; 
@@ -70,7 +70,7 @@ param.variables.Omega_ = [omegax_; omegay_; omegaz_];
     param.kinematics.first_order_kinematics_ = K1_*param.variables.Omega_; 
     param.kinematics.omega_rel_fdqo_ = omega_rel_q1_;
     
-disp('    DONE: Calculating First-Order Kinematics.')   
+disp('    DONE.')   
 
 
 

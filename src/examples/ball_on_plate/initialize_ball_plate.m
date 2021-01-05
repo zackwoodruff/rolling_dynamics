@@ -6,6 +6,7 @@
 % and returns them in the param structure
 
 function param = initialize_ball_plate(param)
+disp('Initializing ball and plate surface parameterizations...')
 
 %% 1.2.1  Symbolic Variables 
     syms uo_ vo_ uh_ vh_ psi_ real 
@@ -60,4 +61,7 @@ function param = initialize_ball_plate(param)
     param.bodies.P  = [param.bodies.object.parameters_o; param.bodies.hand.parameters_h];     
     assumeAlso(param.bodies.P_>0) % constant parameters are all positive
     
+
+%% Return
+disp('    DONE.');%: Initializing ball and plate surface parameterizations.')
 end

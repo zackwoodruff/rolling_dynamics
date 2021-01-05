@@ -1,5 +1,5 @@
 function param = derive_rolling_dynamics(param)
-disp('Calculating Rolling Dynamics...')
+disp('Calculating rolling dynamics...')
 
 %% Initialize Hand Variables
 % Positions
@@ -202,13 +202,11 @@ if ~param.options.is_fast_dynamics
                K3_ * [accTerms(1:2,:); zeros([4,6])]];     
     end
 
-    tic
     if param.options.is_simplify
         param.dynamics.full_dynamics_ = simplify(subs(K7_ + K8_ * dVh_,P_,P));
     else
         param.dynamics.full_dynamics_ = subs(K7_ + K8_ * dVh_,P_,P);
     end
-    toc
 end
 
 
@@ -230,5 +228,5 @@ Tsh_ = RpToTrans(Rsh_,psh_);
 param.functions.fTsh = matlabFunction(Tsh_,'vars',{param.variables.states_(1:6)});
 
 %% Return
-disp('    DONE: Calculating Rolling Dynamics.')
+disp('    DONE.')
 end

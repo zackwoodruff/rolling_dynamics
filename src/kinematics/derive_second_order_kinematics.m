@@ -2,7 +2,7 @@ function param = derive_second_order_kinematics(param)
 
 
 %% Initialize acceleration expressions
-disp('Calculating Second-Order Kinematics...')
+disp('Calculating second-order kinematics...')
 %****** put into variables field
     % Variables for second order kinematics equations
     syms alphax_ alphay_ alphaz_ real
@@ -132,5 +132,5 @@ disp('Calculating Second-Order Kinematics...')
         param.kinematics.alpha_z_=alpha_z_;
     end
     
-    disp('    DONE: Calculating Second-Order Kinematics.')
+    disp('    DONE.')
 end
