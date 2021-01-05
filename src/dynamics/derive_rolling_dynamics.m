@@ -148,9 +148,6 @@ elseif strcmp(friction_model,'pure-rolling') % Pure Rolling (Eq 9)
     K6_ = subs(RHS1_ - Ad_Toch_(:,3:6)*dVrel(3:6) + a_(:,1:2) * ch_F_contact(1:2), P_,P); 
 end
 
-%% Expressions to Export 
-
-
 if param.options.is_simplify
     param.dynamics.K5_ = simplify(subs(K5_, P_,P));
     param.dynamics.K6_ = simplify(subs(K6_, P_,P));
@@ -161,6 +158,61 @@ else
     param.dynamics.Ad_Toh_ = subs(Ad_Toh_, P_,P);
 end
 
+
+%% Derive full rolling dynamics (Equation 12)
+% Solve explicitly for the alpha and wrench terms from equations (8)/(9)
+% WARNING: May require a large symbolic matrix inversion, can be avoided
+% by setting param.options.is_fast_dynamics to true
+% Equation: alpha_lambda = velTerms + accTerms*dVh_
+
+% States (22): 
+% s =  [theta, beta, gamma, rhx, rhy, rhz, ...
+%       uo_, vo_, uh_, vh_, psi_,...
+%       omega_x, omega_y, omega_z, v_x, v_y, v_z, ... 
+%       duo_, dvo_, duh_, dvh_, dpsi_]
+%
+% ds = K7_(s) + K8_(s) * dVh
+    
+if ~param.options.is_fast_dynamics
+    invK5_ = inv(param.dynamics.K5_);
+    velTerms = invK5_* param.dynamics.K6_; 
+    accTerms = invK5_*(- param.dynamics.Ad_Toh_);
+
+    K2_ = subs(param.kinematics.K2_, P_,P);
+    K3_ = subs(param.kinematics.K3_, P_,P);
+
+    % Deriving equation (12)
+    if strcmp(friction_model,'rolling') % Rolling
+        K7_ = [dxddx_hand(1:6);...
+               param.variables.dq_;...
+               zeros(6,1);...
+               K2_ + K3_*[velTerms(1:3); dVrel(4:6)]];
+        K8_ = [zeros([6,6]);...
+               zeros([5,6]);...
+               eye(6);...
+               K3_ * [accTerms(1:3,:); zeros([3,6])]]; 
+    elseif strcmp(friction_model,'pure-rolling') % Pure Rolling
+        K7_ = [dxddx_hand(1:6);...
+               param.variables.dq_;...
+               zeros(6,1);...
+               K2_ + K3_*[velTerms(1:2); dVrel(3:6)]];
+        K8_ = [zeros([6,6]);...
+               zeros([5,6]);...
+               eye(6);...    
+               K3_ * [accTerms(1:2,:); zeros([4,6])]];     
+    end
+
+    tic
+    if param.options.is_simplify
+        param.dynamics.full_dynamics_ = simplify(subs(K7_ + K8_ * dVh_,P_,P));
+    else
+        param.dynamics.full_dynamics_ = subs(K7_ + K8_ * dVh_,P_,P);
+    end
+    toc
+end
+
+
+%% Expressions to Export 
 param.variables.states_hand_ = states_hand_; % full hand state
 param.variables.states_ = [states_hand_(1:6); param.variables.q_; states_hand_(7:12); param.variables.dq_];
 param.variables.dVh_ = dVh_; % full hand controls
@@ -173,7 +225,7 @@ param.functions.fThch = matlabFunction(subs(Thch_,param.bodies.P_,param.bodies.P
 param.functions.fThco = matlabFunction(subs(Thch_*Tcho_,param.bodies.P_,param.bodies.P), 'vars',{param.variables.q_});
 
 Rsh_ = fEulerToR(param.variables.states_(1:3),'XYZ');
-psh_ =  param.variables.states_(4:6);
+psh_ = param.variables.states_(4:6);
 Tsh_ = RpToTrans(Rsh_,psh_);
 param.functions.fTsh = matlabFunction(Tsh_,'vars',{param.variables.states_(1:6)});
 

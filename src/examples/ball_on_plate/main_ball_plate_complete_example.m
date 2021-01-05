@@ -71,21 +71,25 @@ param = derive_first_order_kinematics(param);
 % From Section V.A
 % Return K5, K6 (K7 and K8 if full derivation) 
 param.dynamics.gravity = 9.81; 
+param.options.is_fast_dynamics = false; 
+
 param = derive_rolling_dynamics(param);
 
 % TODO: 
 % - add full derivation of alpha_z
 
-
-%% Export dynamics functions
+%% 3.2 Export dynamics functions
 % From Section V.B
+% Equations used by f_dynamics_handler.m
+
 % TODO:
-% - Add derivation of full dynamics
-param.options.is_fast_dynamics = true; 
+% - Add export
+
+
 param.options.export_directory = pwd; 
 export_dynamics_functions(param)
 
-% Equations used by f_dynamics_handler.m
+
 
 
 %**********************************************
