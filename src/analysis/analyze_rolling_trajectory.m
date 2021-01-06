@@ -169,7 +169,7 @@ ylabel('$\omega_z$')
 
 %% Check energy 
 % Checking angular momentum conservation
-Vo_t = param.functions.fVo_(states')
+Vo_t = param.functions.fVo(states')
 %param.dynamics.functions.fb_V_o1(P,states'); 
 Vh_t = states(:,12:17)';
 
