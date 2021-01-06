@@ -227,6 +227,9 @@ psh_ = param.variables.states_(4:6);
 Tsh_ = RpToTrans(Rsh_,psh_);
 param.functions.fTsh = matlabFunction(Tsh_,'vars',{param.variables.states_(1:6)});
 
+% relative velocity function
+param.functions.fVo = matlabFunction(subs(Vo_,P_,P),'vars',{param.variables.states_});
+
 %% Return
 disp('    DONE.')
 end
