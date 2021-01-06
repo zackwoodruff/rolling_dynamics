@@ -69,7 +69,7 @@ param.variables.Omega_ = [omegax_; omegay_; omegaz_];
     param.kinematics.K1_=K1_;
     param.kinematics.first_order_kinematics_ = K1_*param.variables.Omega_; 
     param.kinematics.omega_rel_fdqo_ = omega_rel_q1_;
-    
+    param.kinematics.omega_rel_fdqh_ = omega_rel_q2_;
 disp('    DONE.')   
 
 
