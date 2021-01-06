@@ -15,6 +15,7 @@ clc
 close all
 
 
+
 %**********************************************
 % 1. Initialization 
 %**********************************************
@@ -64,7 +65,7 @@ param = derive_first_order_kinematics(param);
  param = derive_second_order_kinematics(param);
 
  
-%% 
+ 
 %**********************************************
 % 3. Derive Dynamics
 %**********************************************
@@ -85,13 +86,13 @@ param.options.export_directory = pwd;
 export_dynamics_functions(param)
 
 
+
 %**********************************************
 % 4. Open Loop Simulation
 %**********************************************
 %% 4.1
 % From Section V.C
 %Simulate rolling using either the full dynamics or the partial dynamics 
-disp('Simulating dynamic rolling...')
 
 % Time and integration tolerances
 param.sim.dt = 0.01;
@@ -122,14 +123,12 @@ param.sim.controls_t = zeros([6,length(param.sim.tvec_u)]);
 % Simulate rolling dyanmics
 param.sim.states_t = run_dynamic_rolling_simulation(param);
 
-disp('    DONE.');
 
 
-%%
 %**********************************************
-% 5. Visualize Results
+% 5. Visualization
 %**********************************************
-disp('Visualizing rolling trajectory...')
+%% 5.1 Visualize rolling trajectory 
 
 % Set Options
 param.options.visualization.xlim = [-8,8];
@@ -143,16 +142,17 @@ param.options.visualization.show_contact = true;
 param.options.visualization.is_export=false; 
 param.options.visualization.export_figure_name='plate_ball_spin';
 
-% Visualize dynamic rolling trajectory  
+% Run visualiztion 
 visualize_trajectory(param)
 
-disp('    DONE.');
 
 
-%%
 %**********************************************
 % 6. Analyze Results 
 %**********************************************
-% 6.1
+%% 6.1
 % TODO: 
 % - Add code to analyze the output trajectory 
+
+%% 
+toc
