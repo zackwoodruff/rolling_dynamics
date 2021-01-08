@@ -10,6 +10,8 @@ function analyze_rolling_trajectory(param, states_t)
 %   h_v_sh_x, h_v_sh_y, h_v_sh_z, ...              % h_v_sh (:,15:17) - linear body vel {h}
 %   duo_, dvo_, duh_, dvh_, dpsi_]                 % dq (:,18:22) - contact coordinate velocities
 
+disp('Analyzing rolling trajectory...'); 
+
 % Extracting state trajectories 
 % h_V_sh = [h_omega_sh; h_v_sh]  
 Phi_sh_t = states_t(:,1:3);
@@ -322,54 +324,78 @@ xlabel('$t$ (s)')
 
 %% Fig 6: Check energy 
 % Checking angular momentum conservation
-Vo_t = param.functions.fVo(states_t')
-%param.dynamics.functions.fb_V_o1(P,states'); 
-Vh_t = states_t(:,12:17)';
+% note: momentum is only conserved when hand is stationary because of acceleration
+% control assumption. 
 
+o_Vso_t = param.functions.fVo(states_t');
+h_Vsh_t = states_t(:,12:17)';
+
+% Define hand inertia parameters
 Gh = eye(6); 
 mass_h = 1; 
+
+% Hand inertia parameters
+Go = param.bodies.object.Go; 
+mass_o = param.bodies.object.mass_o;
+
+gravity = param.dynamics.gravity;
+
+
 % Kinetic Energy
-KE_object = sum(1/2*param.bodies.object.Go*Vo_t.^2); 
-KE_hand = sum(1/2*Gh*Vh_t.^2);
+KE_object = sum(1/2*Go*o_Vso_t.^2); 
+KE_hand = sum(1/2*Gh*h_Vsh_t.^2);
 
 % Potential energy 
+r_so_ti = zeros(3,npts); 
 for i=1:npts
     q_ti = states_t(i,[7:11])';
-    s_X1_ti = states_t(i,[1:6])';
-    Tsh_ti = param.functions.fTsh(s_X1_ti); 
+    hand_configuration_ti = states_t(i,1:6)';
+    Tsh_ti = param.functions.fTsh(hand_configuration_ti); 
     Tso_ti = Tsh_ti*param.functions.fTho(q_ti);
-    s_po_t(:,i) = Tso_ti(1:3,4);%Tso1_ti(3,4);
-    
-    Tsco_ti = Tsh_ti*param.functions.fThco(q_ti);   
-    s_pco_t(:,i) = Tsco_ti(1:3,4);    
+    r_so_ti(:,i) = Tso_ti(1:3,4);
 end
-s_p2z_t = states_t(1:npts,6)';%states(1:npts,6)';
-PE_object = param.bodies.object.mass_o*param.dynamics.gravity*s_po_t(3,:); 
-PE_hand = mass_h*param.dynamics.gravity*s_p2z_t; 
+
+PE_object = mass_o*gravity*r_so_ti(3,:);
+r_so_z_ti = states_t(1:npts,6)'; % Z coordinate of hand in space frame
+PE_hand = mass_h*gravity*r_so_z_ti; 
 
 % Total energy
 Etotal = KE_object + KE_hand + PE_object + PE_hand; 
 
-% Plots
+
+% Plot results 
 figure(6); clf
+% Energy contribution from object and hand KE and PE
 subplot(2,1,1)
 plot(t,[KE_object; PE_object; KE_hand; PE_hand; Etotal]')
 legend('$KE_o$', '$PE_o$', '$KE_h$', '$PE_h$', '$E_\mathrm{total}$','Location','NorthEast')
 title('Energy Conservation Verification')
 xlabel('$t$ (s)')
-ylabel('Energy') 
+ylabel('Energy (J)') 
 
+% Total change in energy 
 subplot(2,1,2)
 plot(t,Etotal'-Etotal(1))
 xlabel('$t$ (s)')
-ylabel('$\Delta E_\mathrm{total}$') %(m/s^2) and (rad/s^2)
+ylabel('$\Delta E_\mathrm{total}$ (J)') %(m/s^2) and (rad/s^2)
 
+
+
+%% Export
+% if param.dynamics.is_export
+%     for i=1:6
+%         figure(i)
+%         print(gcf,[param.dynamics.dir param.dynamics.export_figure_name '_figure' num2str(i)],'-dpng','-r300');
+%     end
+% end
 
 
 %% End Analysis
 set(0,'defaulttextInterpreter','tex')
 set(0,'defaultLegendInterpreter','tex')
 
+
+disp('    DONE.'); 
 return 
 
 
@@ -430,28 +456,5 @@ return
 % subplot(3,1,3)
 % plot(t,alpha_t(3,:)'-alpha_num(3,:)')
 % title('$\alpha_z$ compare')
-
-
-%% Export
-% if param.dynamics.is_export
-%     for i=1:6
-%         figure(i)
-%         print(gcf,[param.dynamics.dir param.dynamics.export_figure_name '_figure' num2str(i)],'-dpng','-r300');
-%     end
-% end
-    
-%% Plots
-
-
-
-%% No slip
-% qdq_ = [param.geo.U_;param.geo.dU_];
-% omega_z_simp_ = simplify(param.functions.symbolic.omega_xyz_simple(3));
-% out = fdiff_t_syms(omega_z_simp_,param.geo.U_,param.geo.dU_);
-% out2 = subs(out+param.geo.ddU_(5),param.geo.P_,param.geo.P);
-% param.dynamics.functions.falphaz_pure = matlabFunction(out2,'Vars',{qdq_;param.geo.ddU_(1:4)});
-% simplify(param.kinematics2simp(5))
-
-
 
 end
