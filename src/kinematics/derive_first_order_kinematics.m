@@ -1,78 +1,110 @@
-function param = derive_first_order_kinematics(param) 
+% derive_first_order_kinematics.m
+% Zack Woodruff
+% 1/8/2021
 
+% Input:
+% param: structure containing important variables, options, and functions
+
+% Output: 
+% param: same structure as input, plus first order kinematics expressions
+
+function param = derive_first_order_kinematics(param) 
 % From Appendix B-B
 disp('Calculating first-order kinematics...')
 
-% Return: K1
-param.kinematics.local_geometry.Rpsi_ = [cos(param.variables.q_(5)),-sin(param.variables.q_(5));-sin(param.variables.q_(5)),-cos(param.variables.q_(5))]; 
-param.kinematics.local_geometry.E1 = [0,-1;1,0];
-param.kinematics.local_geometry.object.H_tilda_ = param.kinematics.local_geometry.Rpsi_ * param.kinematics.local_geometry.object.H_ * param.kinematics.local_geometry.Rpsi_;
 
-% Initializing velocity expressions
-syms omegax_ omegay_ omegaz_ real
-param.variables.omegaxy_ = [omegax_;omegay_];
-param.variables.Omega_ = [omegax_; omegay_; omegaz_];
-
-% make new function, extract these from param
-    sqrtGo_ = param.kinematics.local_geometry.object.sqrtG_; 
-    Rpsi_ = param.kinematics.local_geometry.Rpsi_;
-    Ho_tilda_ = param.kinematics.local_geometry.object.H_tilda_; 
-    Hh_ = param.kinematics.local_geometry.hand.H_; 
-
-    sqrtGh_ = param.kinematics.local_geometry.hand.sqrtG_;
-
-    sigma_h_ = param.kinematics.local_geometry.hand.sigma_;
-    Gamma_h_ = param.kinematics.local_geometry.hand.Gamma_;
-
-    sigma_o_ = param.kinematics.local_geometry.object.sigma_;
-    Gamma_o_ = param.kinematics.local_geometry.object.Gamma_;
-    E1 = param.kinematics.local_geometry.E1; 
-    
-    
-    K1o_ = inv(sqrtGo_)*Rpsi_*inv(Ho_tilda_ + Hh_)*E1;
-    K1h_ = inv(sqrtGh_)*inv(Ho_tilda_ + Hh_)*E1;
-    K1_psi_ = sigma_o_*Gamma_o_*K1o_ + sigma_h_*Gamma_h_*K1h_;
-    K1_ = [K1o_,    zeros(2,1);...
-          K1h_,    zeros(2,1);...
-          K1_psi_, -1];
-    if param.options.is_simplify
-        K1_ = simplify(K1_);
-    end
-    
-    % MAYBE? Expressions for first order rolling constraints on dq_
-    % rotational velocities in terms of contact coordinates
-    dUo_ = param.variables.dq_(1:2);
-    dUh_ = param.variables.dq_(3:4);
-    dpsi_ = param.variables.dq_(5);
-    omega_xy1_ = E1\(Ho_tilda_+Hh_)*Rpsi_'*sqrtGo_*dUo_;
-    omega_xy2_ = E1\(Ho_tilda_+Hh_)*sqrtGh_*dUh_;
-    omegaz_ = sigma_o_*Gamma_o_*dUo_+sigma_h_*Gamma_h_*dUh_-dpsi_;
-    omega_z1_ = omegaz_;
-    omega_z2_ = omegaz_;
-    
-    %omega_xy1= (inv(K1o)*param.geo.dq_(1:2));
-    %omega_z1 = (K1_psi*omega_xy1 - param.geo.dq_(5));
-    
-    %omega_xy2= (inv(K1h)*param.geo.dq_(3:4));
-    %omega_z2 = (K1_psi*omega_xy2 - param.geo.dq_(5));
-    
-    omega_rel_q1_ =[omega_xy1_; omega_z1_]; 
-    omega_rel_q2_ =[omega_xy2_; omega_z2_];
-    
-    if param.options.is_simplify
-        omega_rel_q1_ = simplify(omega_rel_q1_);
-        omega_rel_q2_ = simplify(omega_rel_q2_);
-    end
-      
-%**Return K1 and K1*Omega_ and relative velocity from dq expressions
-    %and functions 
-    param.kinematics.K1_=K1_;
-    param.kinematics.first_order_kinematics_ = K1_*param.variables.Omega_; 
-    param.kinematics.omega_rel_fdqo_ = omega_rel_q1_;
-    param.kinematics.omega_rel_fdqh_ = omega_rel_q2_;
-disp('    DONE.')   
+%% Initializing symbolic velocity expressions
+syms omega_x_ omega_y_ omega_z_ real
+omega_xy_ = [omega_x_;omega_y_];
+Omega_ = [omega_x_; omega_y_; omega_z_];
 
 
+%% Derive K1 from Eq. (31)
+% dq = K1(q)*omega_rel
+
+% Defining terms from Appendix B-B
+E1 = [0,-1;1,0]; 
+psi_ = param.variables.q_(5);
+Rpsi_ =  [cos(psi_),-sin(psi_);...
+         -sin(psi_),-cos(psi_)];
+Ho_ = param.kinematics.local_geometry.object.H_;
+Ho_tilda_ = Rpsi_ * Ho_ * Rpsi_;
 
 
+% Extracting differental geometry expressions from param
+Hh_ = param.kinematics.local_geometry.hand.H_; 
+
+sqrtGo_ = param.kinematics.local_geometry.object.sqrtG_; 
+sqrtGh_ = param.kinematics.local_geometry.hand.sqrtG_;
+
+sigma_h_ = param.kinematics.local_geometry.hand.sigma_;
+Gamma_h_ = param.kinematics.local_geometry.hand.Gamma_;
+
+sigma_o_ = param.kinematics.local_geometry.object.sigma_;
+Gamma_o_ = param.kinematics.local_geometry.object.Gamma_;
+
+
+% Solving for Eq. (31)
+K1o_ = inv(sqrtGo_)*Rpsi_*inv(Ho_tilda_ + Hh_)*E1;
+K1h_ = inv(sqrtGh_)*inv(Ho_tilda_ + Hh_)*E1;
+K1_psi_ = sigma_o_*Gamma_o_*K1o_ + sigma_h_*Gamma_h_*K1h_;
+K1_ = [K1o_,    zeros(2,1);...
+      K1h_,    zeros(2,1);...
+      K1_psi_, -1];
+if param.options.is_simplify
+    K1_ = simplify(K1_);
 end
+    
+
+%% Derive relative velocities omega_rel in terms of q and dq
+% Inverting the equation for K1 to find omega_xyz in terms of q, dq
+% There are five equations for dq, and three for omega_xyz so there are
+% multiple expressions 
+
+% symbolic contact coordinate velocity variables 
+dUo_ = param.variables.dq_(1:2);
+dUh_ = param.variables.dq_(3:4);
+dpsi_ = param.variables.dq_(5);
+
+% omega_xyz as f(q,dq) using equations, 1, 2, and 5; 
+omega_xy_o_ = E1\(Ho_tilda_+Hh_)*Rpsi_'*sqrtGo_*dUo_;
+omega_z_qdq_ = sigma_o_*Gamma_o_*dUo_+sigma_h_*Gamma_h_*dUh_-dpsi_;
+omega_rel_fqdq1_ =[omega_xy_o_; omega_z_qdq_]; 
+
+% omega_xyz as f(q,dq) using equations, 3, 4, and 5; 
+omega_xy2_ = E1\(Ho_tilda_+Hh_)*sqrtGh_*dUh_;
+omega_rel_fqdq2_ =[omega_xy2_; omega_z_qdq_];
+
+if param.options.is_simplify
+    omega_rel_fqdq1_ = simplify(omega_rel_fqdq1_);
+    omega_rel_fqdq2_ = simplify(omega_rel_fqdq2_);
+end
+
+
+%% TODO: Expressions for first order rolling constraints on dq_?
+
+
+%% Expressions to export
+% Symbolic velocity variables. 
+param.variables.omega_xy_ = omega_xy_;
+param.variables.Omega_ = Omega_;
+
+% Additional terms from Appendix B-B
+param.kinematics.local_geometry.Rpsi_ =  Rpsi_;
+param.kinematics.local_geometry.E1 = E1;
+param.kinematics.local_geometry.object.Ho_tilda_ = Ho_tilda_; 
+
+% First order kinematics expressions 
+param.kinematics.K1_=K1_; % dq = K1(q)*omega_rel
+param.kinematics.first_order_kinematics_ = K1_*param.variables.Omega_;  % full first order kinematics expression 
+
+% Relative contact velocities omega_rel as f(q,dq)
+param.kinematics.omega_rel_fqdq1_ = omega_rel_fqdq1_;
+param.kinematics.omega_rel_fqdq2_ = omega_rel_fqdq2_;
+
+disp('    DONE.')   
+end
+
+
+
+
