@@ -103,7 +103,7 @@ end
     Ad_Toh_ = Adjoint(Toh_); 
     
     Go = param.bodies.object.Go; % Object Spatial Inertia Matrix
-    omega_rel_ = param.kinematics.omega_rel_fdqo_; 
+    omega_rel_ = param.kinematics.omega_rel_fqdq1_; 
     Vrel_ = [omega_rel_;0;0;0];  % relative twist at the contact
     Vo_ = Ad_Toh_*Vh_ + Ad_Toch_ * Vrel_; % From Eq 2
     ad_Vo = ad(Vo_);

@@ -153,7 +153,7 @@ noslip_t = f_no_slip_(qdq_t');
 
 
 % Rolling linear velocity constraint Eq. (33)
-omega_xy_ = subs(param.kinematics.omega_rel_fdqh_(1:2),P_,P);
+omega_xy_ = subs(param.kinematics.omega_rel_fqdq1_(1:2),P_,P);
 no_spin_ =  K1_(5,1:2)* omega_xy_ - dq_(5); 
 f_no_spin_=matlabFunction(no_spin_,'Vars',{[q_;dq_]}); 
 no_spin_t = f_no_spin_(qdq_t');

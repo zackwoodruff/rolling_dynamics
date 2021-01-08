@@ -55,8 +55,8 @@ disp('Calculating second-order kinematics...')
     %omega_xy = omega_xy1;
     %omega_z = omega_z1; 
     
-    omega_xy_ = param.kinematics.omega_rel_fdqo_(1:2); 
-    omega_z_ = param.kinematics.omega_rel_fdqo_(3); 
+    omega_xy_ = param.kinematics.omega_rel_fqdq1_(1:2); 
+    omega_z_ = param.kinematics.omega_rel_fqdq1_(3); 
     
     
 %% Calculate K2 (velocity terms)
