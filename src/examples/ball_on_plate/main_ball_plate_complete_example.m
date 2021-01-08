@@ -58,6 +58,8 @@ disp('    DONE.');
 % From Appendix B-B
 %**Return K1 and K1*Omega_ and relative velocity from dq expressions
 % and functions
+% TODO:
+% - include first order velocity constraints? 
 param = derive_first_order_kinematics(param);
 
 
