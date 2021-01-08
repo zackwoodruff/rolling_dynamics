@@ -66,6 +66,8 @@ param = derive_first_order_kinematics(param);
 %% 2.3 Second Order Kinematics
 % From Appendix B-C
 % Returns: Alpha_, K2_, K3_, second_order_kinematics_, a_roll_, alpha_z_pr_
+% TODO: 
+% - add full derivation of alpha_z
  param = derive_second_order_kinematics(param);
 
  
@@ -79,8 +81,6 @@ param = derive_first_order_kinematics(param);
 param.dynamics.gravity = 9.81; 
 param = derive_rolling_dynamics(param);
 
-% TODO: 
-% - add full derivation of alpha_z
 
 
 %% 3.2 Export dynamics functions
