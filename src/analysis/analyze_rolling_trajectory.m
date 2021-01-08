@@ -35,7 +35,7 @@ rgb = colors_temp([2,3,1],:);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%State Plots
+% State Plots
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Fig 1: Plot q(t) and dq(t)
 figure(1); clf
@@ -59,12 +59,13 @@ grid on
 
 
 
-%% Fig 2: Plot the hand position and velocities 
+%% Fig 2: Hand States 
+% Plot the hand position and velocities 
 % Phi_sh(t), r_sh(t)
 % h_omega_sh(t), h_v_sh(t)
 
 figure(2); clf;
-sgtitle('Hand States')
+%sgtitle('Hand States')
 
 subplot(2,2,1);
 h21=plot(t,Phi_sh_t);
@@ -100,37 +101,38 @@ end
 
    
 
-%% Fig 3: Controls
-% Accelerations of object2 
-controls_t = param.sim.controls_t;
-%controls_t = param.dynamics.controls_t_fine; 
-figure(3); clf
-subplot(2,1,1); hold on
-plot(t,controls_t(1,:),'Color',rgb(1,:),'LineWidth',1.5) % roll
-plot(t,controls_t(2,:),'Color',rgb(2,:),'LineWidth',1.5) % pitch
-plot(t,controls_t(3,:),'Color',rgb(3,:),'LineWidth',1.5) % yaw
-hleg = legend('$^b\dot{\omega}_{h,x}$', '$^b\dot{\omega}_{h,y}$', '$^b\dot{\omega}_{h,z}$');
-set(hleg,'interpreter','latex','FontSize',15)
+%% Fig 3: Hand Controls
+% Commanded accelations of the hand h_dV_sh_t
+h_dV_sh_t = param.sim.controls_t;
 
-title('Rotational Controls on Object 2')
-ylabel('Acceleration $(\mathrm{rad}/s^2)$')
-xlabel('$t (s)$')
+figure(3); clf
+%sgtitle('Hand Controls')
+subplot(2,1,1); hold on
+plot(t,h_dV_sh_t(1,:),'Color',rgb(1,:),'LineWidth',1.5) % d roll
+plot(t,h_dV_sh_t(2,:),'Color',rgb(2,:),'LineWidth',1.5) % d pitch
+plot(t,h_dV_sh_t(3,:),'Color',rgb(3,:),'LineWidth',1.5) % d yaw
+hleg = legend('$^h\dot{\omega}_{sh,x}$', '$^h\dot{\omega}_{sh,y}$', '$^h\dot{\omega}_{sh,z}$');
+set(hleg,'interpreter','latex','FontSize',latex_fontsize)
+title('Rotational Hand Accelerations')
+ylabel('rad/s$^2$')
+xlabel('$t$ (s)')
 
 subplot(2,1,2); hold on
-plot(t,controls_t(4,:),'Color',rgb(1,:),'LineWidth',1.5) %Ux
-plot(t,controls_t(5,:),'Color',rgb(2,:),'LineWidth',1.5) %Uy 
-plot(t,controls_t(6,:),'Color',rgb(3,:),'LineWidth',1.5) % Uz
-hleg = legend('$^b\dot{V}_{h,x}$', '$^b\dot{V}_{h,y}$', '$^b\dot{V}_{h,z}$');
-set(hleg,'interpreter','latex','FontSize',15)
-title('Linear Controls on Object 2')
-xlabel('$t (s)$')
-ylabel('Acceleration $(m/s^2)$')
+plot(t,h_dV_sh_t(4,:),'Color',rgb(1,:),'LineWidth',1.5) %Ux
+plot(t,h_dV_sh_t(5,:),'Color',rgb(2,:),'LineWidth',1.5) %Uy 
+plot(t,h_dV_sh_t(6,:),'Color',rgb(3,:),'LineWidth',1.5) % Uz
+hleg = legend('$^ha_{sh,x}$', '$^ha_{sh,y}$', '$^ha_{sh,z}$');
+set(hleg,'interpreter','latex','FontSize',latex_fontsize)
+title('Linear Hand Accelerations')
+xlabel('$t$ (s)')
+ylabel('m/s$^2$')
 
 
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Validity checks 
-%%_%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Check slipping
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Fig 4: Check slipping
 % Rolling linear velocity constraint Eq. (32)
 q_ = param.variables.q_;
 dq_ = param.variables.dq_;
@@ -155,15 +157,94 @@ subplot(2,1,1); hold on
 plot(t, noslip_t(1:2,:)')
 %plot(t, (param.functions.fomegaxy(qdq_t')-param.functions.fomegaxy2(qdq_t')))
 title('No Slip Constraint Eq. (32)')
-xlabel('$t (s)$')
+xlabel('$t$ (s)')
 %ylabel('Contact Velocities')
 subplot(2,1,2);
 plot(t, no_spin_t')
 title('No Spin Constraint Eq. (33)')
-xlabel('$t (s)$')
+xlabel('$t$ (s)')
 ylabel('$\omega_z$')
 
-%% Check energy 
+
+
+%% Fig 5: Extract frictional forces
+if param.options.is_fast_dynamics %  general method 
+    alpha_t = zeros(3,npts); 
+    if strcmp(param.options.friction_model,'rolling')
+        lambda_t = zeros(3,npts); 
+    elseif strcmp(param.options.friction_model,'pure-rolling')
+        lambda_t = zeros(4,npts); 
+    end
+    
+    for i=1:npts
+        q_ti =q_t(i,:)';
+        dq_ti =dq_t(i,:)';
+        x_ti = states_t(i,:)';
+        controls_ti = h_dV_sh_t(:,i);
+        
+        K5 = autoGen_f_K5(q_ti);
+        K6 = autoGen_f_K6(x_ti);
+        Ad_Toh_ = autoGen_f_Ad_Toh(q_ti);
+        alpha_lambda = inv(K5)*(K6-Ad_Toh_*controls_ti);
+     
+        if strcmp(param.options.friction_model,'rolling')
+            alpha_t(:,i) = alpha_lambda(1:3); 
+            lambda_t(:,i) = alpha_lambda(4:6);
+        elseif strcmp(param.options.friction_model,'pure-rolling')
+            alpha_t(1:2,i) = alpha_lambda(1:2);
+            alpha_t(3,i) = autoGen_f_alpha_z_pure_rolling([q_ti;dq_ti]);
+            lambda_t(:,i) = alpha_lambda(3:6); 
+        end
+    end
+    
+else % Analytical method
+    lambda_t = autoGen_f_F_contact(states_t',h_dV_sh_t);
+    %lambda_t = param.dynamics.functions.flambda(P,states',controls_t); 
+end
+
+%
+figure(5); clf
+subplot(2,1,1); hold on
+if strcmp(param.options.friction_model,'rolling')
+    plot(t,lambda_t(1,:),'Color',rgb(1,:),'LineWidth',1.5) % fx
+    plot(t,lambda_t(2,:),'Color',rgb(2,:),'LineWidth',1.5) % fy
+    plot(t,lambda_t(3,:),'Color',rgb(3,:),'LineWidth',1.5) % fz
+    hleg = legend('$^{c_h}f_x$', '$^{c_h}f_y$', '$^{c_h}f_z$');
+elseif strcmp(param.options.friction_model,'pure-rolling')
+    plot(t,lambda_t(1,:),'Color',rgb(3,:),'LineWidth',1.5,'LineStyle',':') % tau z
+    plot(t,lambda_t(2,:),'Color',rgb(1,:),'LineWidth',1.5) % fx
+    plot(t,lambda_t(3,:),'Color',rgb(2,:),'LineWidth',1.5) % fy
+    plot(t,lambda_t(4,:),'Color',rgb(3,:),'LineWidth',1.5) % fz
+    hleg = legend('$^{c_h}\tau_z$', '$^{c_h}f_x$', '$^{c_h}f_y$', '$^{c_h}f_z$');
+end
+set(hleg,'interpreter','latex','FontSize',latex_fontsize)
+title('Constraint Forces/Torques $\lambda$')
+ylabel('Forces (N) or Torques (Nm)')
+xlabel('$t$ (s)')
+
+% Checking friction limits 
+mu_s = param.bodies.mu_s; 
+
+subplot(2,1,2); hold on
+if strcmp(param.options.friction_model,'rolling')
+    plot(t,abs(lambda_t(1,:))/mu_s,'Color',rgb(1,:),'LineWidth',1.5) % fx
+    plot(t,abs(lambda_t(2,:))/mu_s,'Color',rgb(2,:),'LineWidth',1.5) % fy
+    plot(t,abs(lambda_t(3,:)),'Color',rgb(3,:),'LineWidth',1.5) % fz
+    hleg = legend('$||^{c_h}f_x||/\mu_s$', '$||^{c_h}f_y||/\mu_s$', '$||^{c_h}f_z||$');
+elseif strcmp(param.options.friction_model,'pure-rolling')
+    mu_spin = param.bodies.mu_spin;
+    plot(t,abs(lambda_t(1,:))/mu_spin,'Color',rgb(3,:),'LineWidth',1.5,'LineStyle',':') % tau z
+    plot(t,abs(lambda_t(2,:))/mu_s,'Color',rgb(1,:),'LineWidth',1.5) % fx
+    plot(t,abs(lambda_t(3,:))/mu_s,'Color',rgb(2,:),'LineWidth',1.5) % fy
+    plot(t,abs(lambda_t(4,:)),'Color',rgb(3,:),'LineWidth',1.5) % fz
+    hleg = legend('$||^{c_h}\tau_z||/\mu_\mathrm{spin}$', '$||^{c_h}f_x|| /\mu_s$', '$||^{c_h}f_y||/\mu_s$', '$||^{c_h}f_z||$');
+end
+title('Checking Friction Constraints')
+xlabel('$t$ (s)')
+
+
+
+%% Fig 6: Check energy 
 % Checking angular momentum conservation
 Vo_t = param.functions.fVo(states_t')
 %param.dynamics.functions.fb_V_o1(P,states'); 
@@ -194,94 +275,19 @@ PE_hand = mass_h*param.dynamics.gravity*s_p2z_t;
 Etotal = KE_object + KE_hand + PE_object + PE_hand; 
 
 % Plots
-figure(5); clf
+figure(6); clf
 subplot(2,1,1)
 plot(t,[KE_object; PE_object; KE_hand; PE_hand; Etotal]')
 legend('$KE_o$', '$PE_o$', '$KE_h$', '$PE_h$', '$E_\mathrm{total}$','Location','NorthEast')
 title('Energy Conservation Verification')
-xlabel('$t (s)$')
+xlabel('$t$ (s)')
 ylabel('Energy') 
 
 subplot(2,1,2)
 plot(t,Etotal'-Etotal(1))
-xlabel('t (s)')
+xlabel('$t$ (s)')
 ylabel('$\Delta E_\mathrm{total}$') %(m/s^2) and (rad/s^2)
 
-
-%% Extract frictional forces
-if param.options.is_fast_dynamics %  general method 
-    alpha_t = zeros(3,npts); 
-    if strcmp(param.options.friction_model,'rolling')
-        lambda_t = zeros(3,npts); 
-    elseif strcmp(param.options.friction_model,'pure-rolling')
-        lambda_t = zeros(4,npts); 
-    end
-    
-    for i=1:npts
-        q_ti =q_t(i,:)';
-        dq_ti =dq_t(i,:)';
-        x_ti = states_t(i,:)';
-        controls_ti = controls_t(:,i);
-        
-        K5 = autoGen_f_K5(q_ti);
-        K6 = autoGen_f_K6(x_ti);
-        Ad_Toh_ = autoGen_f_Ad_Toh(q_ti);
-        alpha_lambda = inv(K5)*(K6-Ad_Toh_*controls_ti);
-     
-        if strcmp(param.options.friction_model,'rolling')
-            alpha_t(:,i) = alpha_lambda(1:3); 
-            lambda_t(:,i) = alpha_lambda(4:6);
-        elseif strcmp(param.options.friction_model,'pure-rolling')
-            alpha_t(1:2,i) = alpha_lambda(1:2);
-            alpha_t(3,i) = autoGen_f_alpha_z_pure_rolling([q_ti;dq_ti]);
-            lambda_t(:,i) = alpha_lambda(3:6); 
-        end
-    end
-    
-else % Analytical method
-    lambda_t = autoGen_f_F_contact(states_t',controls_t);
-    %lambda_t = param.dynamics.functions.flambda(P,states',controls_t); 
-end
-
-%
-figure(6); clf
-subplot(2,1,1); hold on
-if strcmp(param.options.friction_model,'rolling')
-    plot(t,lambda_t(1,:),'Color',rgb(1,:),'LineWidth',1.5) % fx
-    plot(t,lambda_t(2,:),'Color',rgb(2,:),'LineWidth',1.5) % fy
-    plot(t,lambda_t(3,:),'Color',rgb(3,:),'LineWidth',1.5) % fz
-    hleg = legend('$^{c_h}f_x$', '$^{c_h}f_y$', '$^{c_h}f_z$');
-elseif strcmp(param.options.friction_model,'pure-rolling')
-    plot(t,lambda_t(1,:),'Color',rgb(3,:),'LineWidth',1.5,'LineStyle',':') % tau z
-    plot(t,lambda_t(2,:),'Color',rgb(1,:),'LineWidth',1.5) % fx
-    plot(t,lambda_t(3,:),'Color',rgb(2,:),'LineWidth',1.5) % fy
-    plot(t,lambda_t(4,:),'Color',rgb(3,:),'LineWidth',1.5) % fz
-    hleg = legend('$^{c_h}\tau_z$', '$^{c_h}f_x$', '$^{c_h}f_y$', '$^{c_h}f_z$');
-end
-set(hleg,'interpreter','latex','FontSize',15)
-title('Constraint Forces/Torques $\lambda$')
-ylabel('Forces (N) or Torques (Nm)')
-xlabel('$t (s)$')
-
-% Checking friction limits 
-mu_s = param.bodies.mu_s; 
-
-subplot(2,1,2); hold on
-if strcmp(param.options.friction_model,'rolling')
-    plot(t,abs(lambda_t(1,:))/mu_s,'Color',rgb(1,:),'LineWidth',1.5) % fx
-    plot(t,abs(lambda_t(2,:))/mu_s,'Color',rgb(2,:),'LineWidth',1.5) % fy
-    plot(t,abs(lambda_t(3,:)),'Color',rgb(3,:),'LineWidth',1.5) % fz
-    hleg = legend('$||^{c_h}f_x||/\mu_s$', '$||^{c_h}f_y||/\mu_s$', '$||^{c_h}f_z||$');
-elseif strcmp(param.options.friction_model,'pure-rolling')
-    mu_spin = param.bodies.mu_spin;
-    plot(t,abs(lambda_t(1,:))/mu_spin,'Color',rgb(3,:),'LineWidth',1.5,'LineStyle',':') % tau z
-    plot(t,abs(lambda_t(2,:))/mu_s,'Color',rgb(1,:),'LineWidth',1.5) % fx
-    plot(t,abs(lambda_t(3,:))/mu_s,'Color',rgb(2,:),'LineWidth',1.5) % fy
-    plot(t,abs(lambda_t(4,:)),'Color',rgb(3,:),'LineWidth',1.5) % fz
-    hleg = legend('$||^{c_h}\tau_z||/\mu_\mathrm{spin}$', '$||^{c_h}f_x|| /\mu_s$', '$||^{c_h}f_y||/\mu_s$', '$||^{c_h}f_z||$');
-end
-title('Checking Friction Constraints')
-xlabel('$t (s)$')
 
 
 %% End Analysis
