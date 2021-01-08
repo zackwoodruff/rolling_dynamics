@@ -1,6 +1,6 @@
 % derive_local_contact_geometry_expressions.m
 % Zack Woodruff
-% Created: 11/25/2020
+% 1/8/2021
 
 % Input:
 % fi_: Symbolic surface parameterization
