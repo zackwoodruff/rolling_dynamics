@@ -37,7 +37,9 @@ rgb = colors_temp([2,3,1],:);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % State Plots
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Fig 1: Plot q(t) and dq(t)
+%% Fig 1: Plot contact coordinates
+% q(t), dq(t)
+
 figure(1); clf
 subplot(2,1,1)
 plot(t,q_t,'.-');
@@ -59,7 +61,7 @@ grid on
 
 
 
-%% Fig 2: Hand States 
+%% Fig 2: Plot hand states 
 % Plot the hand position and velocities 
 % Phi_sh(t), r_sh(t)
 % h_omega_sh(t), h_v_sh(t)
@@ -101,7 +103,10 @@ end
 
    
 
-%% Fig 3: Hand Controls
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Control Plot
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Fig 3: Plot hand controls
 % Commanded accelations of the hand h_dV_sh_t
 h_dV_sh_t = param.sim.controls_t;
 
@@ -132,38 +137,43 @@ ylabel('m/s$^2$')
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Validity checks 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Fig 4: Check slipping
-% Rolling linear velocity constraint Eq. (32)
+%% Fig 4: Check velocity constraints are satisfied
 q_ = param.variables.q_;
 dq_ = param.variables.dq_;
 
-K1_ = subs(param.kinematics.K1_,P_,P);
+% Rolling linear velocity constraint Eq. (32)
+K1_ = subs(param.kinematics.K1_,P_,P); % Eq (31) 
 K1o_ = K1_(1:2,1:2);
 K1h_ = K1_(3:4,1:2);
 no_slip_ = simplify([inv(K1o_), -inv(K1h_), zeros(2,1)]);
 f_no_slip_=matlabFunction(no_slip_*dq_,'Vars',{[q_;dq_]}); 
 noslip_t = f_no_slip_(qdq_t');
 
-% Rolling linear velocity constraint Eq. (33)
 
+% Rolling linear velocity constraint Eq. (33)
 omega_xy_ = subs(param.kinematics.omega_rel_fdqh_(1:2),P_,P);
 no_spin_ =  K1_(5,1:2)* omega_xy_ - dq_(5); 
 f_no_spin_=matlabFunction(no_spin_,'Vars',{[q_;dq_]}); 
 no_spin_t = f_no_spin_(qdq_t');
 
-% Plotting results 
+
+% Plot results
 figure(4); clf 
-subplot(2,1,1); hold on
-plot(t, noslip_t(1:2,:)')
-%plot(t, (param.functions.fomegaxy(qdq_t')-param.functions.fomegaxy2(qdq_t')))
-title('No Slip Constraint Eq. (32)')
-xlabel('$t$ (s)')
-%ylabel('Contact Velocities')
-subplot(2,1,2);
-plot(t, no_spin_t')
-title('No Spin Constraint Eq. (33)')
-xlabel('$t$ (s)')
-ylabel('$\omega_z$')
+if strcmp(param.options.friction_model,'rolling')
+    plot(t, noslip_t(1:2,:)')
+    title('No Slip Constraints Eq. (32)')
+    xlabel('$t$ (s)')
+elseif strcmp(param.options.friction_model,'pure-rolling')
+    subplot(2,1,1); hold on
+    plot(t, noslip_t(1:2,:)')
+    title('No Slip Constraints Eq. (32)')
+    xlabel('$t$ (s)')
+    subplot(2,1,2);
+    plot(t, no_spin_t')
+    title('No Spin Constraint Eq. (33)')
+    xlabel('$t$ (s)')
+    ylabel('$\omega_z$')
+end
 
 
 
