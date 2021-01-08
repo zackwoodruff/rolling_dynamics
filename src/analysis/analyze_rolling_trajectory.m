@@ -177,9 +177,12 @@ end
 
 
 
-%% Fig 5: Extract frictional forces
-if param.options.is_fast_dynamics %  general method 
-    alpha_t = zeros(3,npts); 
+%% Fig 5a: Plot contact wrench
+% lambda_t contains contact wrench values that are nonzero
+% rolling: lambda_t = [fx; fy; fz]
+% pure rolling: lambda_t = [tau_z; fx; fy; fz]
+
+if param.options.is_fast_dynamics %  General method 
     if strcmp(param.options.friction_model,'rolling')
         lambda_t = zeros(3,npts); 
     elseif strcmp(param.options.friction_model,'pure-rolling')
@@ -187,69 +190,132 @@ if param.options.is_fast_dynamics %  general method
     end
     
     for i=1:npts
+        % Get states and controls at time t(i)  
         q_ti =q_t(i,:)';
-        dq_ti =dq_t(i,:)';
-        x_ti = states_t(i,:)';
+        s_ti = states_t(i,:)';
         controls_ti = h_dV_sh_t(:,i);
         
+        % Calculate contact wrench using Eq. (8)/(9) 
         K5 = autoGen_f_K5(q_ti);
-        K6 = autoGen_f_K6(x_ti);
+        K6 = autoGen_f_K6(s_ti);
         Ad_Toh_ = autoGen_f_Ad_Toh(q_ti);
         alpha_lambda = inv(K5)*(K6-Ad_Toh_*controls_ti);
      
         if strcmp(param.options.friction_model,'rolling')
-            alpha_t(:,i) = alpha_lambda(1:3); 
             lambda_t(:,i) = alpha_lambda(4:6);
         elseif strcmp(param.options.friction_model,'pure-rolling')
-            alpha_t(1:2,i) = alpha_lambda(1:2);
-            alpha_t(3,i) = autoGen_f_alpha_z_pure_rolling([q_ti;dq_ti]);
             lambda_t(:,i) = alpha_lambda(3:6); 
         end
     end
     
-else % Analytical method
+else % Analytical method using exported contact wrench function 
     lambda_t = autoGen_f_F_contact(states_t',h_dV_sh_t);
-    %lambda_t = param.dynamics.functions.flambda(P,states',controls_t); 
 end
 
-%
+
+% Plot contact wrench 
 figure(5); clf
 subplot(2,1,1); hold on
 if strcmp(param.options.friction_model,'rolling')
     plot(t,lambda_t(1,:),'Color',rgb(1,:),'LineWidth',1.5) % fx
     plot(t,lambda_t(2,:),'Color',rgb(2,:),'LineWidth',1.5) % fy
     plot(t,lambda_t(3,:),'Color',rgb(3,:),'LineWidth',1.5) % fz
-    hleg = legend('$^{c_h}f_x$', '$^{c_h}f_y$', '$^{c_h}f_z$');
+    hleg = legend('$f_x$', '$f_y$', '$f_z$');
+    ylabel('N')
 elseif strcmp(param.options.friction_model,'pure-rolling')
     plot(t,lambda_t(1,:),'Color',rgb(3,:),'LineWidth',1.5,'LineStyle',':') % tau z
     plot(t,lambda_t(2,:),'Color',rgb(1,:),'LineWidth',1.5) % fx
     plot(t,lambda_t(3,:),'Color',rgb(2,:),'LineWidth',1.5) % fy
     plot(t,lambda_t(4,:),'Color',rgb(3,:),'LineWidth',1.5) % fz
-    hleg = legend('$^{c_h}\tau_z$', '$^{c_h}f_x$', '$^{c_h}f_y$', '$^{c_h}f_z$');
+    hleg = legend('$\tau_z$', '$f_x$', '$f_y$', '$f_z$');
+    ylabel('N or Nm')
 end
 set(hleg,'interpreter','latex','FontSize',latex_fontsize)
-title('Constraint Forces/Torques $\lambda$')
-ylabel('Forces (N) or Torques (Nm)')
+title('Contact Wrench $\lambda$')
 xlabel('$t$ (s)')
 
-% Checking friction limits 
+
+
+%% Fig 5b: Checking friction limit constraints  
 mu_s = param.bodies.mu_s; 
+
+% Positive normal force constraint
+if strcmp(param.options.friction_model,'rolling')
+    fz_constraint_index = find(lambda_t(3,:)<0);
+elseif strcmp(param.options.friction_model,'pure-rolling')
+    fz_constraint_index = find(lambda_t(4,:)<0);
+end
+if ~isempty(fz_constraint_index)
+    warning('fz constraint violated during part of simulation')
+end
+
+% No linear slip constraint
+if strcmp(param.options.friction_model,'rolling')
+    fx_constraint_index = find(abs(lambda_t(1,:))/mu_s> lambda_t(3,:));
+    fy_constraint_index = find(abs(lambda_t(2,:))/mu_s> lambda_t(3,:));
+elseif strcmp(param.options.friction_model,'pure-rolling')
+    fx_constraint_index = find(abs(lambda_t(2,:))/mu_s> lambda_t(4,:));
+    fy_constraint_index = find(abs(lambda_t(3,:))/mu_s> lambda_t(4,:));
+end
+if ~isempty(fx_constraint_index)
+    warning('fx constraint violated during part of simulation')
+end
+if ~isempty(fy_constraint_index)
+    warning('fy constraint violated during part of simulation')
+end
+
+% No spin torque constraint 
+if strcmp(param.options.friction_model,'pure-rolling')
+    mu_spin = param.bodies.mu_spin;
+    tau_z_constraint_index = find(abs(lambda_t(1,:))/mu_spin > lambda_t(4,:));
+    if ~isempty(tau_z_constraint_index)
+        warning('tau_z constraint violated during part of simulation')
+    end
+end
+
 
 subplot(2,1,2); hold on
 if strcmp(param.options.friction_model,'rolling')
-    plot(t,abs(lambda_t(1,:))/mu_s,'Color',rgb(1,:),'LineWidth',1.5) % fx
-    plot(t,abs(lambda_t(2,:))/mu_s,'Color',rgb(2,:),'LineWidth',1.5) % fy
-    plot(t,abs(lambda_t(3,:)),'Color',rgb(3,:),'LineWidth',1.5) % fz
-    hleg = legend('$||^{c_h}f_x||/\mu_s$', '$||^{c_h}f_y||/\mu_s$', '$||^{c_h}f_z||$');
+    fx_scaled_t = abs(lambda_t(1,:))/mu_s; 
+    fy_scaled_t = abs(lambda_t(2,:))/mu_s;
+    fz_t = lambda_t(3,:);
+    
+    % forces
+    plot(t,fx_scaled_t,'Color',rgb(1,:),'LineWidth',1.5) % fx
+    plot(t,fy_scaled_t,'Color',rgb(2,:),'LineWidth',1.5) % fy
+    plot(t,fz_t,'Color',rgb(3,:),'LineWidth',1.5) % fz
+    
+    % constraint violations 
+    plot(t(fx_constraint_index),fx_scaled_t(fx_constraint_index),'*r','MarkerSize',3);
+    plot(t(fy_constraint_index),fy_scaled_t(fy_constraint_index),'*g','MarkerSize',3);
+    plot(t(fz_constraint_index),fz_t(fz_constraint_index),'*b','MarkerSize',3);
+    
+    hleg = legend('$||f_x||/\mu_s$', '$||f_y||/\mu_s$', '$f_z$',...
+        '$f_x$ violation', '$f_y$ violation', '$f_z$ violation');
+    ylabel('N')
 elseif strcmp(param.options.friction_model,'pure-rolling')
-    mu_spin = param.bodies.mu_spin;
-    plot(t,abs(lambda_t(1,:))/mu_spin,'Color',rgb(3,:),'LineWidth',1.5,'LineStyle',':') % tau z
-    plot(t,abs(lambda_t(2,:))/mu_s,'Color',rgb(1,:),'LineWidth',1.5) % fx
-    plot(t,abs(lambda_t(3,:))/mu_s,'Color',rgb(2,:),'LineWidth',1.5) % fy
-    plot(t,abs(lambda_t(4,:)),'Color',rgb(3,:),'LineWidth',1.5) % fz
-    hleg = legend('$||^{c_h}\tau_z||/\mu_\mathrm{spin}$', '$||^{c_h}f_x|| /\mu_s$', '$||^{c_h}f_y||/\mu_s$', '$||^{c_h}f_z||$');
+    tau_z_scaled_t = abs(lambda_t(1,:))/mu_spin;
+    fx_scaled_t = abs(lambda_t(2,:))/mu_s; 
+    fy_scaled_t = abs(lambda_t(3,:))/mu_s;
+    fz_t = lambda_t(4,:);
+        
+    % torque/forces
+    plot(t,tau_z_scaled_t,'Color',rgb(3,:),'LineWidth',1.5,'LineStyle',':') % tau z
+    plot(t,fx_scaled_t,'Color',rgb(1,:),'LineWidth',1.5) % fx
+    plot(t,fy_scaled_t,'Color',rgb(2,:),'LineWidth',1.5) % fy
+    plot(t,fz_t,'Color',rgb(3,:),'LineWidth',1.5) % fz
+    
+    % constraint violations
+    plot(t(tau_z_constraint_index),tau_z_scaled_t(tau_z_constraint_index),'.b','MarkerSize',3);
+    plot(t(fx_constraint_index),fx_scaled_t(fx_constraint_index),'*r','MarkerSize',3);
+    plot(t(fy_constraint_index),fy_scaled_t(fy_constraint_index),'*g','MarkerSize',3);
+    plot(t(fz_constraint_index),fz_t(fz_constraint_index),'*b','MarkerSize',3);
+    
+    hleg = legend('$||\tau_z||/\mu_\mathrm{spin}$', '$||f_x|| /\mu_s$', '$||f_y||/\mu_s$', '$f_z$',...
+        '$\tau_z$ violation', '$f_x$ violation', '$f_y$ violation', '$f_z$ violation');
+    ylabel('N or Nm')
 end
-title('Checking Friction Constraints')
+title('Friction Constraints')
 xlabel('$t$ (s)')
 
 
@@ -306,35 +372,6 @@ set(0,'defaultLegendInterpreter','tex')
 
 return 
 
-%% Plot points that violate the friction limits on figure 6
-% t_opt = param.mpp.trajectories{end}.t;
-% x_opt = param.mpp.trajectories{end}.x;
-% u_opt = param.mpp.trajectories{end}.u;
-% if param.mpp.is_rot_only
-%     Fnormal = param.dynamics.fFnormal2D_rot_only(x_opt',u_opt')';
-%     Fxy = param.dynamics.fFxy2D_rot_only(x_opt',u_opt')';
-%     Fxy = [Fxy, zeros(size(Fxy))]; 
-% else
-%     Fnormal = param.dynamics.fFnormal2D(x_opt',u_opt')';
-%     Fxy = param.dynamics.fFxy2D(x_opt',u_opt')';
-%     Fxy = [Fxy, zeros(size(Fxy))]; 
-% end
-% mu=1; % friction coefficient 
-% c = [-Fnormal,Fxy.^2-Fnormal.^2*mu^2]; %c <= 0 (Force normal is therefore >0 0.
-% %c = -Fnormal;
-% [t_index_slip1] = find(c(:,2)>0);
-% [t_index_slip2] = find(c(:,3)>0);
-% 
-% figure(6)
-% subplot(2,1,2); hold on
-% if exist('h','var')
-%  delete(h);
-% end
-% if exist('h2','var')
-%  delete(h2);
-% end
-% h = plot(t_opt(t_index_slip1),zeros(size(t_index_slip1)),'*r');
-% h2 = plot(t_opt(t_index_slip2),zeros(size(t_index_slip2)),'og');
 
 
 
