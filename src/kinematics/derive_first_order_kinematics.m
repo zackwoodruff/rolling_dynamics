@@ -7,6 +7,8 @@
 
 % Output: 
 % param: same structure as input, plus first order kinematics expressions
+%          Omega_, K1_, first_order_kinematics_, omega_rel_fqdq1_
+%          Rpsi_, E1, Ho_tilda_
 
 function param = derive_first_order_kinematics(param) 
 % From Appendix B-B
