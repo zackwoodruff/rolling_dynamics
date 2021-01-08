@@ -44,21 +44,21 @@ dq         = x(18:22,:); % contact velocities
 % Feedforward term
 N = length(t);  
 if N == 1
-    b_dV_o2 = interp1(tvec_u,u',t)';
+    dVh = interp1(tvec_u,u',t)';
 else
-    b_dV_o2 = u; % for matrix or constant control input
+    dVh = u; % for matrix or constant control input
 end
 
 
 if ~is_fast_dynamics % Fast dynamics in a single equation (Eq. (12))
-    dx = autoGen_f_full_dynamics(t,x,b_dV_o2);
+    dx = autoGen_f_full_dynamics(t,x,dVh);
 else 
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Hand Dynamics
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Matrix form of hand dynamics
-    ddHand= autoGen_f_hand_dynamics(t,x([1:6,12:17],:),b_dV_o2);
+    ddHand= autoGen_f_hand_dynamics(t,x([1:6,12:17],:),dVh);
 
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -74,7 +74,7 @@ else
         K6 = autoGen_f_K6(x(:,i));
         Ad_Toh_ = autoGen_f_Ad_Toh(q(:,i));
         
-        alpha_lambda = inv(K5)*(K6-Ad_Toh_*b_dV_o2(:,i));
+        alpha_lambda = inv(K5)*(K6-Ad_Toh_*dVh(:,i));
         
         %C1val = autoGen_fC1exported_new(q(:,i)); 
         %C2val = autoGen_fC2exported_new(x(:,i), b_dV_o2(:,i)); 
