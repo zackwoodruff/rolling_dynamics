@@ -61,6 +61,11 @@ disp('Initializing ball and plate surface parameterizations...')
     param.bodies.P  = [param.bodies.object.parameters_o; param.bodies.hand.parameters_h];     
     assumeAlso(param.bodies.P_>0) % constant parameters are all positive
     
+%% 1.2.5 Friction Parameters
+    param.bodies.mu_s = 1; 
+    if strcmp(param.options.friction_model,'pure-rolling')
+        param.bodies.mu_spin = 1; 
+    end
 
 %% Return
 disp('    DONE.');%: Initializing ball and plate surface parameterizations.')
