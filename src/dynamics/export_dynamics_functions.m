@@ -21,7 +21,7 @@ if param.options.is_fast_dynamics
         'Outputs', {'dYdt'}, 'Vars',{t_,qdq_,param.variables.Alpha_});
     
     % Pure Rolling Constraint
-    matlabFunction(param.kinematics.alpha_z_,'File',[export_directory '\autoGen_f_alpha_z_pure_rolling'],...
+    matlabFunction(param.kinematics.alpha_z_pr_,'File',[export_directory '\autoGen_f_alpha_z_pure_rolling'],...
     'Optimize',is_optimize,'Vars',{qdq_});
     
     % Hand Dynamics

@@ -84,14 +84,14 @@ if strcmp(friction_model,'rolling') % Rolling
     %***** add to param.variables
     syms fx_ fy_ fz_ real
     ch_F_contact = [zeros(3,1); fx_; fy_; fz_];
-    dVrel = [Alpha_; param.kinematics.axyz_]; % relative accelerations at the contact
+    dVrel = [Alpha_; param.kinematics.a_roll_]; % relative accelerations at the contact
     %Vrel = [Omega_;0;0;0];  % relative twist at the contact
     %nFree = 3; 
 elseif strcmp(friction_model,'pure-rolling') % Pure Rolling
     %***** add to param.variables
     syms tau_z_ fx_ fy_ fz_ real
     ch_F_contact = [zeros(2,1); tau_z_; fx_; fy_; fz_];
-    dVrel = [Alpha_(1:2); param.kinematics.alpha_z_; param.kinematics.axyz_]; % relative accelerations at the contact
+    dVrel = [Alpha_(1:2); param.kinematics.alpha_z_pr_; param.kinematics.a_roll_]; % relative accelerations at the contact
     %Vrel = [Omega_(1:2);0;0;0;0]; % relative twist at the contact
     %nFree = 2; 
 end
