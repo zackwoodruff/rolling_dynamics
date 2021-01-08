@@ -8,7 +8,7 @@
 % Add the src folders to the path 
 tic
 addpath(genpath('../../'))
-set(0,'DefaultFigureWindowStyle','normal')
+set(0,'DefaultFigureWindowStyle','docked')
 
 clear
 clc
