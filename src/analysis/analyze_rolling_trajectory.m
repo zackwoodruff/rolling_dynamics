@@ -1,18 +1,23 @@
-function [param, frames] = analyze_rolling_trajectory(param, states)
-%states = [roll_2, pitch_2, yaw_2; ...                       % Phi_2 (1:3)
-%           s_p2x; s_p2y; s_p2z; ...                          % p (4:6)
-%           u1; v1, u2, v2, psi; ...                          % q (7:11)
-%           b_omega_o2_x; b_omega_o2_y; b_omega_o2_z; ...     % omega_b2 (12:14)
-%           b_vx_o2; b_vy_o2; b_vz_o2                         % vb2 (15:17)
-%           du1; dv1, du2, dv2, dpsi;];                       % dq (18:22)
+function analyze_rolling_trajectory(param, states_t)
+% Intputs:
+% param - parameters, variables, equations 
+% states_t - rolling trajectory states(t) 
+%  states_t = 
+%  [theta, beta, gamma, ...                        % Phi_sh (:,1:3) - euler orientation {h} in {s} 
+%   r_sh_x, r_sh_y, r_sh_z, ...                    % r_sh (:,4:6) - position of {h} in {s}
+%   uo_, vo_, uh_, vh_, psi_,...                   % q (:,7:11) - contact coordinates
+%   h_omega_sh_x, h_omega_sh_y, h_omega_sh_z, ...  % h_omega_sh (:,12:14) - rot body vel {h}
+%   h_v_sh_x, h_v_sh_y, h_v_sh_z, ...              % h_v_sh (:,15:17) - linear body vel {h}
+%   duo_, dvo_, duh_, dvh_, dpsi_]                 % dq (:,18:22) - contact coordinate velocities
 
-% Extracting states
-s_Phi_so2_t = states(:,1:3);
-s_p_so2_t = states(:,4:6);
-q_t = states(:,7:11);
-b_omega_o2 = states(:,12:14);
-b_v_o2 = states(:,15:17);
-dq_t = states(:,18:22);
+% Extracting state trajectories 
+% h_V_sh = [h_omega_sh; h_v_sh]  
+Phi_sh_t = states_t(:,1:3);
+r_sh_t = states_t(:,4:6);
+q_t = states_t(:,7:11);
+h_omega_sh_t = states_t(:,12:14);
+h_v_sh_t = states_t(:,15:17);
+dq_t = states_t(:,18:22);
 qdq_t = [q_t, dq_t]; 
 
 t=param.sim.tvec; 
@@ -24,10 +29,8 @@ P_ = param.bodies.P_;
 set(0,'defaulttextInterpreter','latex')
 set(0,'defaultLegendInterpreter','latex')
 latex_fontsize=15;
-line_colors=lines;
 colors_temp = linspecer(3); 
 rgb = colors_temp([2,3,1],:);
-
 
 
 
@@ -37,62 +40,55 @@ rgb = colors_temp([2,3,1],:);
 %% Fig 1: Plot q(t) and dq(t)
 figure(1); clf
 subplot(2,1,1)
-h_controls_t=plot(t,q_t,'.-');
-legend({'$u_1$','$v_1$','$u_2$','$v_2$','$\psi$'},...
+plot(t,q_t,'.-');
+legend({'$u_o$','$v_o$','$u_h$','$v_h$','$\psi$'},...
     'Location','EastOutside','FontSize',latex_fontsize)
 xlabel('$t$ (s)')
-ylabel('$q(t)$')
+ylabel('$q$')
 title('Contact Coordinates q(t)')
 grid on
 
 subplot(2,1,2)
 hdUt = plot(t,dq_t,'.-');
-legend({'$\dot{u}_1$','$\dot{v}_1$','$\dot{u}_2$','$\dot{v}_2$','$\dot{\psi}$'},...
+legend({'$\dot{u}_o$','$\dot{v}_o$','$\dot{u}_h$','$\dot{v}_h$','$\dot{\psi}$'},...
     'Location','EastOutside','FontSize',latex_fontsize)
 xlabel('$t$ (s)')
-ylabel('$\dot{q}(t)$')
+ylabel('$\dot{q}$')
 title('Contact Coordinate Velocities $\dot{q}(t)$')
 grid on
 
-%for i=1:5
-%   hdUt(i).Color =line_colors(10+i,:);  
-%end
-%pause(1); 
 
 
-%% Fig 2: Plot s_Phi_so2(t) and s_p_so2(t)
-% Need to add legend or labels
-axis_labels.y_labels = {'rad', 'm', 'rad/s', 'm/s'}; 
-axis_labels.x_labels = {'$t(s)$', '$t(s)$', '$t(s)$', '$t(s)$'}; 
-plot_four(t,{s_Phi_so2_t',b_omega_o2',s_p_so2_t',b_v_o2'},...
-            {'Orientation $(^s\Phi_{so_2})$','Rotational Velocity $(^b\omega_{o_2})$',...
-             'Position $(^sr_{so_2})$', 'Linear Velocity $(^bV_{o_2})$'},2,axis_labels)
-         
-         
-figure(4); clf;
+%% Fig 2: Plot the hand position and velocities 
+% Phi_sh(t), r_sh(t)
+% h_omega_sh(t), h_v_sh(t)
+
+figure(2); clf;
+sgtitle('Hand States')
+
 subplot(2,2,1);
-h21=plot(t,s_Phi_so2_t);
-xlabel('$t(s)$')
+h21=plot(t,Phi_sh_t);
+xlabel('$t$ (s)')
 ylabel('rad')
-title('Orientation $(^s\Phi_{so_2})$')
+title('Orientation $(\Phi_{sh})$')
 
 subplot(2,2,2); 
-h22=plot(t,b_omega_o2);
-xlabel('$t(s)$')
+h22=plot(t,r_sh_t);
+xlabel('$t$ (s)')
 ylabel('m')
-title('Rotational Velocity $(^b\omega_{_h})$')
+title('Position $(\mathbf{r}_{sh})$')
 
 subplot(2,2,3); 
-h23 = plot(t,s_p_so2_t);
-xlabel('$t(s)$')
+h23 = plot(t,h_omega_sh_t);
+xlabel('$t$ (s)')
 ylabel('rad/s')
-title('Position $(^sr_{s_h})$')
+title('Rotational Velocity $(^h\omega_{sh})$')
 
 subplot(2,2,4); 
-h24 = plot(t,b_v_o2);
-xlabel('$t(s)$')
+h24 = plot(t,h_v_sh_t);
+xlabel('$t$ (s)')
 ylabel('m/s')
-title('Linear Velocity $(^bV_{_h})$')
+title('Linear Velocity $(^h\mathbf{v}_{sh})$')
 
 % Update Colors to r-g-b
 for j=1:3
@@ -102,7 +98,7 @@ for j=1:3
     h24(j).Color = rgb(:,j);  
 end
 
-sgtitle('Hand States')   
+   
 
 %% Fig 3: Controls
 % Accelerations of object2 
@@ -113,7 +109,7 @@ subplot(2,1,1); hold on
 plot(t,controls_t(1,:),'Color',rgb(1,:),'LineWidth',1.5) % roll
 plot(t,controls_t(2,:),'Color',rgb(2,:),'LineWidth',1.5) % pitch
 plot(t,controls_t(3,:),'Color',rgb(3,:),'LineWidth',1.5) % yaw
-hleg = legend('$^b\dot{\omega}_{o_2,x}$', '$^b\dot{\omega}_{o_2,y}$', '$^b\dot{\omega}_{o_2,z}$');
+hleg = legend('$^b\dot{\omega}_{h,x}$', '$^b\dot{\omega}_{h,y}$', '$^b\dot{\omega}_{h,z}$');
 set(hleg,'interpreter','latex','FontSize',15)
 
 title('Rotational Controls on Object 2')
@@ -124,7 +120,7 @@ subplot(2,1,2); hold on
 plot(t,controls_t(4,:),'Color',rgb(1,:),'LineWidth',1.5) %Ux
 plot(t,controls_t(5,:),'Color',rgb(2,:),'LineWidth',1.5) %Uy 
 plot(t,controls_t(6,:),'Color',rgb(3,:),'LineWidth',1.5) % Uz
-hleg = legend('$^b\dot{V}_{o_2,x}$', '$^b\dot{V}_{o_2,y}$', '$^b\dot{V}_{o_2,z}$');
+hleg = legend('$^b\dot{V}_{h,x}$', '$^b\dot{V}_{h,y}$', '$^b\dot{V}_{h,z}$');
 set(hleg,'interpreter','latex','FontSize',15)
 title('Linear Controls on Object 2')
 xlabel('$t (s)$')
@@ -169,9 +165,9 @@ ylabel('$\omega_z$')
 
 %% Check energy 
 % Checking angular momentum conservation
-Vo_t = param.functions.fVo(states')
+Vo_t = param.functions.fVo(states_t')
 %param.dynamics.functions.fb_V_o1(P,states'); 
-Vh_t = states(:,12:17)';
+Vh_t = states_t(:,12:17)';
 
 Gh = eye(6); 
 mass_h = 1; 
@@ -181,8 +177,8 @@ KE_hand = sum(1/2*Gh*Vh_t.^2);
 
 % Potential energy 
 for i=1:npts
-    q_ti = states(i,[7:11])';
-    s_X1_ti = states(i,[1:6])';
+    q_ti = states_t(i,[7:11])';
+    s_X1_ti = states_t(i,[1:6])';
     Tsh_ti = param.functions.fTsh(s_X1_ti); 
     Tso_ti = Tsh_ti*param.functions.fTho(q_ti);
     s_po_t(:,i) = Tso_ti(1:3,4);%Tso1_ti(3,4);
@@ -190,7 +186,7 @@ for i=1:npts
     Tsco_ti = Tsh_ti*param.functions.fThco(q_ti);   
     s_pco_t(:,i) = Tsco_ti(1:3,4);    
 end
-s_p2z_t = states(1:npts,6)';%states(1:npts,6)';
+s_p2z_t = states_t(1:npts,6)';%states(1:npts,6)';
 PE_object = param.bodies.object.mass_o*param.dynamics.gravity*s_po_t(3,:); 
 PE_hand = mass_h*param.dynamics.gravity*s_p2z_t; 
 
@@ -201,7 +197,7 @@ Etotal = KE_object + KE_hand + PE_object + PE_hand;
 figure(5); clf
 subplot(2,1,1)
 plot(t,[KE_object; PE_object; KE_hand; PE_hand; Etotal]')
-legend('$KE_1$', '$PE_1$', '$KE_2$', '$PE_2$', '$E_\mathrm{total}$','Location','NorthEast')
+legend('$KE_o$', '$PE_o$', '$KE_h$', '$PE_h$', '$E_\mathrm{total}$','Location','NorthEast')
 title('Energy Conservation Verification')
 xlabel('$t (s)$')
 ylabel('Energy') 
@@ -224,7 +220,7 @@ if param.options.is_fast_dynamics %  general method
     for i=1:npts
         q_ti =q_t(i,:)';
         dq_ti =dq_t(i,:)';
-        x_ti = states(i,:)';
+        x_ti = states_t(i,:)';
         controls_ti = controls_t(:,i);
         
         K5 = autoGen_f_K5(q_ti);
@@ -243,7 +239,7 @@ if param.options.is_fast_dynamics %  general method
     end
     
 else % Analytical method
-    lambda_t = autoGen_f_F_contact(states',controls_t);
+    lambda_t = autoGen_f_F_contact(states_t',controls_t);
     %lambda_t = param.dynamics.functions.flambda(P,states',controls_t); 
 end
 
