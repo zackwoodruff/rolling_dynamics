@@ -95,7 +95,7 @@ LbarbarB=[Gamma212*L21-diff(L21,Ui_(1));...
 Lbarbar=[LbarbarA;LbarbarB]; % Eq. (37)
 
     
-%% Variables to export
+%% Expressions to export
 geometry_expressions_.G_=G_;
 geometry_expressions_.G_inverse_=G_inverse_;
 geometry_expressions_.sqrtG_ = sqrtG_; 
