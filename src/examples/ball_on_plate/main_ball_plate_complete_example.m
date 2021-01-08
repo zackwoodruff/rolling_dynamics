@@ -56,8 +56,8 @@ disp('    DONE.');
 
 %% 2.2 First Order Kinematics
 % From Appendix B-B
-%**Return K1 and K1*Omega_ and relative velocity from dq expressions
-% and functions
+% Returns: Omega_, K1_, first_order_kinematics_, omega_rel_fqdq1_
+%          Rpsi_, E1, Ho_tilda_
 % TODO:
 % - include first order velocity constraints? 
 param = derive_first_order_kinematics(param);
@@ -65,7 +65,7 @@ param = derive_first_order_kinematics(param);
 
 %% 2.3 Second Order Kinematics
 % From Appendix B-C
-% Return: K2_, K3_, Axyz_rolling_, alpha_z_pure_rolling_, second order kinematics_ , K4_, 
+% Returns: Alpha_, K2_, K3_, second_order_kinematics_, a_roll_, alpha_z_pr_
  param = derive_second_order_kinematics(param);
 
  
