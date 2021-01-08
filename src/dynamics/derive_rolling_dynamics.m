@@ -178,10 +178,20 @@ if ~param.options.is_fast_dynamics
     velTerms = invK5_* param.dynamics.K6_; 
     accTerms = invK5_*(- param.dynamics.Ad_Toh_);
 
+    
+    % Contact wrench function (Eq. (10)/(11)) 
+    alpha_F_contact_ = velTerms - accTerms * dVh_; 
+    if strcmp(friction_model,'rolling') % Rolling
+        F_contact_ = [alpha_F_contact_(4:6)]; % F_contact_roll = [0;0;0;fx;fy;fz] [Eq. (10)]
+    elseif strcmp(friction_model,'pure-rolling') % Pure Rolling
+        F_contact_ = [alpha_F_contact_(3:6)]; % F_contact_pr = [0;0;tau_z;fx;fy;fz] [Eq. (11)]
+    end
+
+    
+    % Deriving equation (12)
     K2_ = subs(param.kinematics.K2_, P_,P);
     K3_ = subs(param.kinematics.K3_, P_,P);
 
-    % Deriving equation (12)
     if strcmp(friction_model,'rolling') % Rolling
         K7_ = [dxddx_hand(1:6);...
                param.variables.dq_;...
@@ -203,10 +213,14 @@ if ~param.options.is_fast_dynamics
     end
 
     if param.options.is_simplify
-        param.dynamics.full_dynamics_ = simplify(subs(K7_ + K8_ * dVh_,P_,P));
+        param.dynamics.full_dynamics_ = simplify(subs(K7_ + K8_ * dVh_,P_,P));      
+        param.dynamics.F_contact_ = simplify(subs(F_contact_,P_,P));   
     else
         param.dynamics.full_dynamics_ = subs(K7_ + K8_ * dVh_,P_,P);
+        param.dynamics.F_contact_ = subs(F_contact_,P_,P);
     end
+    
+
 end
 
 

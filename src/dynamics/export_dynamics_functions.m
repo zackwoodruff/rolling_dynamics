@@ -40,7 +40,12 @@ else
     % Full object and hand dynamics 
     matlabFunction(param.dynamics.full_dynamics_,...
         'file', [export_directory, '\autoGen_f_full_dynamics'],...
-        'Vars', {t_, states_, controls_});            
+        'Vars', {t_, states_, controls_});
+    
+    matlabFunction(param.dynamics.F_contact_,...
+        'file', [export_directory, '\autoGen_f_F_contact'],...
+        'Vars', {states_, controls_});
+    
 end
 
 

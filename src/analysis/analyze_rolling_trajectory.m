@@ -212,56 +212,55 @@ xlabel('t (s)')
 ylabel('$\Delta E_\mathrm{total}$') %(m/s^2) and (rad/s^2)
 
 
-%% 
-warning('STILL NEED TO COMPLETE THE LAST ANALYSIS CODE'); 
-return 
-
 %% Extract frictional forces
-if param.dynamics.dydx_method_num ==1 % Analytical method 
-    %lambda_t = zeros(4,npts);
-    lambda_t = param.dynamics.functions.flambda(P,states',controls_t); 
-elseif param.dynamics.dydx_method_num ==2 % C1C2 method 
+if param.options.is_fast_dynamics %  general method 
     alpha_t = zeros(3,npts); 
-    if strcmp(param.dynamics.rolling_type,'pure')
-        lambda_t = zeros(4,npts); 
-    else
+    if strcmp(param.options.friction_model,'rolling')
         lambda_t = zeros(3,npts); 
+    elseif strcmp(param.options.friction_model,'pure-rolling')
+        lambda_t = zeros(4,npts); 
     end
+    
     for i=1:npts
         q_ti =q_t(i,:)';
         dq_ti =dq_t(i,:)';
         x_ti = states(i,:)';
         controls_ti = controls_t(:,i);
-        C1val=param.dynamics.functions.fC1(q_ti); 
-        C2val=param.dynamics.functions.fC2(x_ti,controls_ti); 
-        alpha_lambda=inv(C1val)*(C2val);
         
-        if strcmp(param.dynamics.rolling_type,'pure')
-            alpha_t(1:2,i) = alpha_lambda(1:2);
-            %alpha_t(3,i) = param.dynamics.functions.falphaz_pure_rolling([q_ti;dq_ti]);
-            alpha_t(3,i) = autoGen_falphaz_pure_rolling([q_ti;dq_ti]);
-            lambda_t(:,i) = alpha_lambda(3:6); 
-        else
+        K5 = autoGen_f_K5(q_ti);
+        K6 = autoGen_f_K6(x_ti);
+        Ad_Toh_ = autoGen_f_Ad_Toh(q_ti);
+        alpha_lambda = inv(K5)*(K6-Ad_Toh_*controls_ti);
+     
+        if strcmp(param.options.friction_model,'rolling')
             alpha_t(:,i) = alpha_lambda(1:3); 
             lambda_t(:,i) = alpha_lambda(4:6);
+        elseif strcmp(param.options.friction_model,'pure-rolling')
+            alpha_t(1:2,i) = alpha_lambda(1:2);
+            alpha_t(3,i) = autoGen_f_alpha_z_pure_rolling([q_ti;dq_ti]);
+            lambda_t(:,i) = alpha_lambda(3:6); 
         end
-    end    
+    end
+    
+else % Analytical method
+    lambda_t = autoGen_f_F_contact(states',controls_t);
+    %lambda_t = param.dynamics.functions.flambda(P,states',controls_t); 
 end
 
-%%
+%
 figure(6); clf
 subplot(2,1,1); hold on
-if size(lambda_t,1)==3  
+if strcmp(param.options.friction_model,'rolling')
     plot(t,lambda_t(1,:),'Color',rgb(1,:),'LineWidth',1.5) % fx
     plot(t,lambda_t(2,:),'Color',rgb(2,:),'LineWidth',1.5) % fy
     plot(t,lambda_t(3,:),'Color',rgb(3,:),'LineWidth',1.5) % fz
-    hleg = legend('$^{c_2}F_x$', '$^{c_2}F_y$', '$^{c_2}F_z$');
-else
+    hleg = legend('$^{c_h}f_x$', '$^{c_h}f_y$', '$^{c_h}f_z$');
+elseif strcmp(param.options.friction_model,'pure-rolling')
     plot(t,lambda_t(1,:),'Color',rgb(3,:),'LineWidth',1.5,'LineStyle',':') % tau z
     plot(t,lambda_t(2,:),'Color',rgb(1,:),'LineWidth',1.5) % fx
     plot(t,lambda_t(3,:),'Color',rgb(2,:),'LineWidth',1.5) % fy
     plot(t,lambda_t(4,:),'Color',rgb(3,:),'LineWidth',1.5) % fz
-    hleg = legend('$^{c_2}\tau_z$', '$^{c_2}F_x$', '$^{c_2}F_y$', '$^{c_2}F_z$');
+    hleg = legend('$^{c_h}\tau_z$', '$^{c_h}f_x$', '$^{c_h}f_y$', '$^{c_h}f_z$');
 end
 set(hleg,'interpreter','latex','FontSize',15)
 title('Constraint Forces/Torques $\lambda$')
@@ -269,23 +268,31 @@ ylabel('Forces (N) or Torques (Nm)')
 xlabel('$t (s)$')
 
 % Checking friction limits 
-param.dynamics.mu=1; 
-mu=param.dynamics.mu; 
+mu_s = param.bodies.mu_s; 
+
 subplot(2,1,2); hold on
-if size(lambda_t,1)==3  
-    plot(t,abs(lambda_t(1,:)),'Color',rgb(1,:),'LineWidth',1.5) % fx
-    plot(t,abs(lambda_t(2,:)),'Color',rgb(2,:),'LineWidth',1.5) % fy
-    plot(t,lambda_t(3,:)*mu,'Color',rgb(3,:),'LineWidth',1.5) % fz
-    hleg = legend('$||^{c_2}F_x||$', '$||^{c_2}F_y||$', '$^{c_2}F_z \mu$');
-else
-    plot(t,lambda_t(1,:),'Color',rgb(3,:),'LineWidth',1.5,'LineStyle',':') % tau z
-    plot(t,abs(lambda_t(2,:)),'Color',rgb(1,:),'LineWidth',1.5) % fx
-    plot(t,abs(lambda_t(3,:)),'Color',rgb(2,:),'LineWidth',1.5) % fy
-    plot(t,lambda_t(4,:)*mu,'Color',rgb(3,:),'LineWidth',1.5) % fz
-    hleg = legend('$^{c_2}\tau_z$', '$||^{c_2}F_x||$', '$||^{c_2}F_y||$', '$^{c_2}F_z \mu$');
+if strcmp(param.options.friction_model,'rolling')
+    plot(t,abs(lambda_t(1,:))/mu_s,'Color',rgb(1,:),'LineWidth',1.5) % fx
+    plot(t,abs(lambda_t(2,:))/mu_s,'Color',rgb(2,:),'LineWidth',1.5) % fy
+    plot(t,abs(lambda_t(3,:)),'Color',rgb(3,:),'LineWidth',1.5) % fz
+    hleg = legend('$||^{c_h}f_x||/\mu_s$', '$||^{c_h}f_y||/\mu_s$', '$||^{c_h}f_z||$');
+elseif strcmp(param.options.friction_model,'pure-rolling')
+    mu_spin = param.bodies.mu_spin;
+    plot(t,abs(lambda_t(1,:))/mu_spin,'Color',rgb(3,:),'LineWidth',1.5,'LineStyle',':') % tau z
+    plot(t,abs(lambda_t(2,:))/mu_s,'Color',rgb(1,:),'LineWidth',1.5) % fx
+    plot(t,abs(lambda_t(3,:))/mu_s,'Color',rgb(2,:),'LineWidth',1.5) % fy
+    plot(t,abs(lambda_t(4,:)),'Color',rgb(3,:),'LineWidth',1.5) % fz
+    hleg = legend('$||^{c_h}\tau_z||/\mu_\mathrm{spin}$', '$||^{c_h}f_x|| /\mu_s$', '$||^{c_h}f_y||/\mu_s$', '$||^{c_h}f_z||$');
 end
-title('Checking Friction Limits')
+title('Checking Friction Constraints')
 xlabel('$t (s)$')
+
+
+%% End Analysis
+set(0,'defaulttextInterpreter','tex')
+set(0,'defaultLegendInterpreter','tex')
+
+return 
 
 %% Plot points that violate the friction limits on figure 6
 % t_opt = param.mpp.trajectories{end}.t;
@@ -328,52 +335,52 @@ xlabel('$t (s)$')
 
 
 %% Compare dE/dT to rotational work equation dE/dt = tau_z*omega_z
-if strcmp(param.dynamics.rolling_type,'pure')
-    figure(7); clf
-    subplot(4,1,1)
-    plot(t, noslip_t(3,:)')
-    ylabel('$\omega_z$')
-    xlabel('$t$')
-
-    subplot(4,1,2)
-    plot(t,lambda_t(1,:),'Color',rgb(3,:),'LineWidth',1.5,'LineStyle',':') % tau z
-    ylabel('$\tau_z$')
-    xlabel('$t$')
-
-    subplot(4,1,3);
-    deltaE = Etotal-Etotal(1); 
-    plot(t,deltaE)
-    ylabel('$E(t)-E(0)$')
-    xlabel('$t$')
-
-    subplot(4,1,4); hold on
-    plot(t,derivative(deltaE,1,2)/diff(t(1:2)))
-    plot(t,noslip_t(3,:).*lambda_t(1,:),'o','MarkerSize',2)
-    ylabel('$dE/dt$')
-    xlabel('$t$')
-    legend('KE/PE func','$\tau_z \omega_z$')
-end
+% if strcmp(param.dynamics.rolling_type,'pure')
+%     figure(7); clf
+%     subplot(4,1,1)
+%     plot(t, noslip_t(3,:)')
+%     ylabel('$\omega_z$')
+%     xlabel('$t$')
+% 
+%     subplot(4,1,2)
+%     plot(t,lambda_t(1,:),'Color',rgb(3,:),'LineWidth',1.5,'LineStyle',':') % tau z
+%     ylabel('$\tau_z$')
+%     xlabel('$t$')
+% 
+%     subplot(4,1,3);
+%     deltaE = Etotal-Etotal(1); 
+%     plot(t,deltaE)
+%     ylabel('$E(t)-E(0)$')
+%     xlabel('$t$')
+% 
+%     subplot(4,1,4); hold on
+%     plot(t,derivative(deltaE,1,2)/diff(t(1:2)))
+%     plot(t,noslip_t(3,:).*lambda_t(1,:),'o','MarkerSize',2)
+%     ylabel('$dE/dt$')
+%     xlabel('$t$')
+%     legend('KE/PE func','$\tau_z \omega_z$')
+% end
 
 %% Compare domega and alpha
-dt=diff(t(1:2)); 
-%alphax_num=derivative(noslip_t(1:end) 
-%alphay_num=noslip_t
-%alphaz_num=noslip_t
-
-omega_xy = param.functions.fomegaxy(qdq_t');
-omega_z = param.functions.fomegaz(qdq_t');
-alpha_num=derivative([omega_xy;omega_z],1,2)./dt; 
-
-figure(8)
-subplot(3,1,1)
-plot(t,alpha_t',t, alpha_num')
-legend('$\alpha_x$','$\alpha_y$','$\alpha_z$')
-subplot(3,1,2)
-plot(t,alpha_t(1:2,:)'-alpha_num(1:2,:)')
-title('$\alpha_{xy}$ compare')
-subplot(3,1,3)
-plot(t,alpha_t(3,:)'-alpha_num(3,:)')
-title('$\alpha_z$ compare')
+% dt=diff(t(1:2)); 
+% %alphax_num=derivative(noslip_t(1:end) 
+% %alphay_num=noslip_t
+% %alphaz_num=noslip_t
+% 
+% omega_xy = param.functions.fomegaxy(qdq_t');
+% omega_z = param.functions.fomegaz(qdq_t');
+% alpha_num=derivative([omega_xy;omega_z],1,2)./dt; 
+% 
+% figure(8)
+% subplot(3,1,1)
+% plot(t,alpha_t',t, alpha_num')
+% legend('$\alpha_x$','$\alpha_y$','$\alpha_z$')
+% subplot(3,1,2)
+% plot(t,alpha_t(1:2,:)'-alpha_num(1:2,:)')
+% title('$\alpha_{xy}$ compare')
+% subplot(3,1,3)
+% plot(t,alpha_t(3,:)'-alpha_num(3,:)')
+% title('$\alpha_z$ compare')
 
 
 %% Export
@@ -386,8 +393,7 @@ title('$\alpha_z$ compare')
     
 %% Plots
 
-set(0,'defaulttextInterpreter','tex')
-set(0,'defaultLegendInterpreter','tex')
+
 
 %% No slip
 % qdq_ = [param.geo.U_;param.geo.dU_];
@@ -397,50 +403,6 @@ set(0,'defaultLegendInterpreter','tex')
 % param.dynamics.functions.falphaz_pure = matlabFunction(out2,'Vars',{qdq_;param.geo.ddU_(1:4)});
 % simplify(param.kinematics2simp(5))
 
-%% Ball on plate case
-if strcmp(param.geo.model,'plane-sphere')
-    qdq_t0 = states(1,[7:11,18:22])';
-    s_X1_t0 = states(1,[1:6])'; 
-    Tso1_t0 = param.functions.fTso1(qdq_t0,s_X1_t0);
-    Rso1_t0 = Tso1_t0(1:3,1:3); 
 
-
-    a = param.geo.R1; 
-    M = param.dynamics.inertial.mass1;
-    I1 = param.dynamics.inertial.I1;
-    C = I1(1,1);
-    C_v2 = 2/5*M*a^2;
-    w = b_omega_o2(1,3);
-    r1 = [q_t(1,3:4)';0];
-    V1 = Rso1_t0*Vo_t(4:6,1); 
-    z = [0,0,1]';
-    %V1 = w*inv((1+M*a^2*inv(C)))
-    r0 = r1 - (1 + M*a^2/C)/w * VecToso3(V1)*z
-
-    % T to complete circle = ~14.67 s) 
-    2*pi/(1/((1 + M*a^2/C)/w))
-
-
-    % w/(1+M*a^2/C)*(3+1/3-1)
-    % M*a^2/C/w*9.81*sin(0.1)
-    %
-    x0=0;
-    y0=0;
-    omega_c = 2/7*w
-    period = 2*pi/omega_c
-    cross(V1,[0;0;w])/w^2
-    r_c = [x0 - V1(2)/w; y0 - V1(1)/w; 0]
-
-
-    % Plot x(t) and y(t) of ball
-    %o2_p1_t = Rso1_t0' * s_p1_t; 
-
-    Vdrift = 5/2*9.81/w*sin(0.1)
-    figure(9);  clf; 
-    plot(s_pco_t(1,:), s_pco_t(2,:),'.')
-    axis equal
-    figure(11);  clf; 
-    plot(t,s_pco_t(1,:)-Vdrift*t, t,s_pco_t(2,:),'.')
-end
 
 end

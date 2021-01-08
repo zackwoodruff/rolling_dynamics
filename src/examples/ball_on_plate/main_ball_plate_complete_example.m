@@ -153,7 +153,6 @@ visualize_trajectory(param)
 %% 6.1
 % TODO: 
 % - Update variable names in analyze_rolling_trajectory
-% - Add frictional force calculation 
 % - Remove extra scrp code from the end 
 analyze_rolling_trajectory(param, param.sim.states_t)
 
