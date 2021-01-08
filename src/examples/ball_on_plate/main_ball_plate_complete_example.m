@@ -19,21 +19,22 @@ close all
 %**********************************************
 % 1. Initialization 
 %**********************************************
-%% 1.1 Input Parameters
-%param.options.model = 'ball-plate';
+%% 1.1 Initialize:
+%-1.1.1 Rolling Configuration Variables, 
+%-1.1.2 Object Geometry and Inertial
+%-1.1.3 Hand Geometry 
+%-1.1.4 Combined Parameters
+%-1.1.5 Friction Parameters
+param = initialize_ball_plate();
+
+%% 1.2 Input Parameters
 param.options.is_simplify = true;
-%param.options.is_generate_figures = false; 
 param.options.friction_model = 'rolling'; %'pure-rolling' or 'rolling';
 param.options.is_fast_dynamics = true; 
-    
-%% 1.2 Initialize:
-%-1.2.1 Rolling Configuration Variables, 
-%-1.2.2 Object Geometry and Inertial
-%-1.2.3 Hand Geometry 
-param = initialize_ball_plate(param);
+% param.options.model = 'ball-plate';
+% param.options.is_generate_figures = false; 
 
 
-    
 %**********************************************
 % 2. Derive Kinematics
 %**********************************************
