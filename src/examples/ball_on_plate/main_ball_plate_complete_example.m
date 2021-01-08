@@ -39,13 +39,14 @@ param.options.is_fast_dynamics = true;
 % 2. Derive Kinematics
 %**********************************************
 %% 2.1 Contact Geometry
-% From Appendix B-A
-disp('Calculating symbolic local contact geometry expressions...') 
-% Object Geometry:
+% From Appendix B
+disp('Calculating symbolic local contact geometry expressions...')
+
+%-2.1.1 Object Geometry:
 param.kinematics.local_geometry.object = ...
     derive_local_contact_geometry_expressions(param.bodies.object.fo_,...
                                               param.variables.Uo_);
-% Hand Geometry:
+%-2.1.2 Hand Geometry:
 param.kinematics.local_geometry.hand = ...
     derive_local_contact_geometry_expressions(param.bodies.hand.fh_,...
                                               param.variables.Uh_);
