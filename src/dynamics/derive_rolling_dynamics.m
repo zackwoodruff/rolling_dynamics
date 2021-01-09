@@ -1,3 +1,14 @@
+% derive_rolling_dynamics.m
+% Zack Woodruff
+% 1/8/2021
+
+% Input:
+% param: structure containing important variables, options, and functions
+
+% Output: 
+% param: same structure as input, plus dynamic rolling expressions
+%        ()
+
 function param = derive_rolling_dynamics(param)
 disp('Calculating rolling dynamics...')
 
