@@ -2,6 +2,10 @@
 % Zack Woodruff
 % 1/8/2021
 
+% This function derives the rolling dynamics equations. It first calculates
+% the hand dynamics function for the hand that is directly controlled. It
+% then calculates the dynamics for the rolling object. 
+
 % Input:
 % param: structure containing important variables, options, and functions
 
@@ -12,51 +16,52 @@
 function param = derive_rolling_dynamics(param)
 disp('Calculating rolling dynamics...')
 
-%% Initialize Hand Variables
+%% Initialize hand variables
 % Positions
 syms theta_h_ beta_h_ gamma_h_ real
-Phi_h_ = [theta_h_; beta_h_; gamma_h_]; % Euler angles for {h} frame in {s} frame
+Phi_sh_ = [theta_h_; beta_h_; gamma_h_]; % Euler angles for {h} frame in {s} frame
 
-syms x_h_ y_h_ z_h_ real;
-r_h_ = [x_h_; y_h_; z_h_]; % position of {h} frame in {s} frame
+syms x_sh_ y_sh_ z_sh_ real;
+r_sh_ = [x_sh_; y_sh_; z_sh_]; % position of {h} frame in {s} frame
 
 
-% Body Velocities of Hand
-syms omegax_h_ omegay_h_ omegaz_h_ real 
-omega_h_ = [omegax_h_; omegay_h_; omegaz_h_]; % rotational body velocity  in {h} frame
+% Body velocities of hand
+syms omega_sh_x_ omega_sh_y_ omega_sh_z_ real 
+omega_sh_ = [omega_sh_x_; omega_sh_y_; omega_sh_z_]; % rotational body velocity  in {h} frame
 
-syms vx_h_ vy_h_ vz_h_ real 
-v_h_  = [vx_h_; vy_h_; vz_h_]; % linear body frame in {h} frame
+syms v_sh_x_ v_sh_y_ v_sh_z_ real 
+v_sh_  = [v_sh_x_; v_sh_y_; v_sh_z_]; % linear body velocity in {h} frame
 
-Vh_ = [omega_h_;v_h_]; % Body twist of the hand 
-states_hand_ = [Phi_h_; r_h_; omega_h_; v_h_]; % full hand state 
+Vh_ = [omega_sh_;v_sh_]; % Body twist of the hand 
+states_hand_ = [Phi_sh_; r_sh_; omega_sh_; v_sh_]; % full hand state 
 
 
 % Hand Controls:
 % We assume the hand accelerations are directly controlled 
-% (\theta, \beta, \gamma, x, y, z)
-syms alphax_h_ alphay_h_ alphaz_h_ ax_h_ ay_h_ az_h_ real; 
-dVh_ = [alphax_h_; alphay_h_; alphaz_h_; ax_h_; ay_h_; az_h_];
+syms alpha_sh_x_ alpha_sh_y_ alpha_sh_z_ a_sh_x_ a_sh_y_ a_sh_z_ real; 
+dV_sh_ = [alpha_sh_x_; alpha_sh_y_; alpha_sh_z_; a_sh_x_; a_sh_y_; a_sh_z_];
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %% Derive Hand Dynamics Equation 
 % Hand is directly acceleration controlled 
 % States: 
-% [theta, beta, gamma, rhx, rhy, rhz, ...
-%   omega_x, omega_y, omega_z, v_x, v_y, v_z, ... 
+%  [theta_h_, beta_h_, gamma_h_, x_sh_, y_sh_, z_sh_, ...
+%   omega_sh_x_, omega_sh_y_, omega_sh_z_,...
+%   v_sh_x_, v_sh_y_, v_sh_z_]; 
 
 % Hand dynamics equation
-%***** return hand dynamics export hand dynamics
-% Dynamics Equations 
-Rsh_euler_ = fEulerToR(Phi_h_,'XYZ'); % Rotation matrix from xyz euler angles 
-%omega_h_ = Kh_*dPhi_h_
-Kh_ = KfromR(Rsh_euler_,Phi_h_);
+% First solve for Kh matrix that maps between omega and dPhi 
+Rsh_euler_ = fEulerToR(Phi_sh_,'XYZ'); % Rotation matrix from xyz euler angles 
+Kh_ = KfromR(Rsh_euler_,Phi_sh_); % omega_sh_ = Kh_*dPhi_sh_
 
-dxddx_hand=simplify([inv(Kh_)*omega_h_;...    % Rotational velocities  inv(Kh_) * omega_h_ = dPhi_h_
-                    Rsh_euler_ * v_h_;... % Linear velocities in space frame 
-                    dVh_]);                  % Accelerations
+dxddx_hand =[inv(Kh_)*omega_sh_;... % Rotational velocities  inv(Kh_) * omega_sh_ = dPhi_sh_
+             Rsh_euler_ * v_sh_;... % Linear velocities in {s} frame 
+             dV_sh_];               % Accelerations from controls 
 
+if param.options.is_simplify
+    dxddx_hand = simplify(dxddx_hand); 
+end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -135,11 +140,11 @@ end
     h_r_hph_ = param.bodies.hand.fh_; 
  % ****** Return K4
     K4_ = ...
-    Ad_Toh_ * [zeros(3,1); VecToso3(omega_h_) * (VecToso3(omega_h_) * h_r_hph_)]...
+    Ad_Toh_ * [zeros(3,1); VecToso3(omega_sh_) * (VecToso3(omega_sh_) * h_r_hph_)]...
     -Ad_Toch_* [VecToso3(omega_rel_)*(Rcho_*omega_o_) ;zeros(3,1)] ...
     -[zeros(3,1); VecToso3(omega_o_) * (VecToso3(omega_o_)*o_r_opo_)]; 
 
-    dVh_; % Hand accelerations 
+    dV_sh_; % Hand accelerations 
 
     % Equation 7: LHS = RHS + RHS2 * dVh_
     %LHS_ = Ad_Toch_*dVrel - inv(Go)*Ad_Tcho_'*ch_F_contact;
@@ -191,7 +196,7 @@ if ~param.options.is_fast_dynamics
 
     
     % Contact wrench function (Eq. (10)/(11)) 
-    alpha_F_contact_ = velTerms - accTerms * dVh_; 
+    alpha_F_contact_ = velTerms - accTerms * dV_sh_; 
     if strcmp(friction_model,'rolling') % Rolling
         F_contact_ = [alpha_F_contact_(4:6)]; % F_contact_roll = [0;0;0;fx;fy;fz] [Eq. (10)]
     elseif strcmp(friction_model,'pure-rolling') % Pure Rolling
@@ -224,10 +229,10 @@ if ~param.options.is_fast_dynamics
     end
 
     if param.options.is_simplify
-        param.dynamics.full_dynamics_ = simplify(subs(K7_ + K8_ * dVh_,P_,P));      
+        param.dynamics.full_dynamics_ = simplify(subs(K7_ + K8_ * dV_sh_,P_,P));      
         param.dynamics.F_contact_ = simplify(subs(F_contact_,P_,P));   
     else
-        param.dynamics.full_dynamics_ = subs(K7_ + K8_ * dVh_,P_,P);
+        param.dynamics.full_dynamics_ = subs(K7_ + K8_ * dV_sh_,P_,P);
         param.dynamics.F_contact_ = subs(F_contact_,P_,P);
     end
     
@@ -238,7 +243,7 @@ end
 %% Expressions to Export 
 param.variables.states_hand_ = states_hand_; % full hand state
 param.variables.states_ = [states_hand_(1:6); param.variables.q_; states_hand_(7:12); param.variables.dq_];
-param.variables.dVh_ = dVh_; % full hand controls
+param.variables.dVh_ = dV_sh_; % full hand controls
 param.dynamics.dxddx_hand = dxddx_hand; % full hand dynamics 
 %matlabFunction(dxddx_hand,'file',[dir, 'autoGen_f_handDynamics_fast'],'Vars',{t_, states_hand_, dV_h_});
 
