@@ -11,7 +11,8 @@
 
 % Output: 
 % param: same structure as input, plus dynamic rolling expressions
-%        ()
+%   state variables, T matrix functions, fVso, dxddx_hand, K5_, K6_, Ad_Toh_,
+%   full_dynamics (if option selected)
 
 function param = derive_rolling_dynamics(param)
 disp('Calculating rolling dynamics...')
@@ -32,15 +33,14 @@ omega_sh_ = [omega_sh_x_; omega_sh_y_; omega_sh_z_]; % rotational body velocity 
 syms v_sh_x_ v_sh_y_ v_sh_z_ real 
 v_sh_  = [v_sh_x_; v_sh_y_; v_sh_z_]; % linear body velocity in {h} frame
 
-Vh_ = [omega_sh_;v_sh_]; % Body twist of the hand 
+Vsh_ = [omega_sh_;v_sh_]; % Body twist of the hand 
 states_hand_ = [Phi_sh_; r_sh_; omega_sh_; v_sh_]; % full hand state 
 
 
 % Hand Controls:
 % We assume the hand accelerations are directly controlled 
 syms alpha_sh_x_ alpha_sh_y_ alpha_sh_z_ a_sh_x_ a_sh_y_ a_sh_z_ real; 
-dV_sh_ = [alpha_sh_x_; alpha_sh_y_; alpha_sh_z_; a_sh_x_; a_sh_y_; a_sh_z_];
-
+dVsh_ = [alpha_sh_x_; alpha_sh_y_; alpha_sh_z_; a_sh_x_; a_sh_y_; a_sh_z_];
 
 
 %% Derive Hand Dynamics Equation 
@@ -52,16 +52,17 @@ dV_sh_ = [alpha_sh_x_; alpha_sh_y_; alpha_sh_z_; a_sh_x_; a_sh_y_; a_sh_z_];
 
 % Hand dynamics equation
 % First solve for Kh matrix that maps between omega and dPhi 
-Rsh_euler_ = fEulerToR(Phi_sh_,'XYZ'); % Rotation matrix from xyz euler angles 
-Kh_ = KfromR(Rsh_euler_,Phi_sh_); % omega_sh_ = Kh_*dPhi_sh_
+Rsh_ = fEulerToR(Phi_sh_,'XYZ'); % Rotation matrix from xyz euler angles 
+Kh_ = KfromR(Rsh_,Phi_sh_); % omega_sh_ = Kh_*dPhi_sh_
 
 dxddx_hand =[inv(Kh_)*omega_sh_;... % Rotational velocities  inv(Kh_) * omega_sh_ = dPhi_sh_
-             Rsh_euler_ * v_sh_;... % Linear velocities in {s} frame 
-             dV_sh_];               % Accelerations from controls 
+             Rsh_ * v_sh_;... % Linear velocities in {s} frame 
+             dVsh_];               % Accelerations from controls 
 
 if param.options.is_simplify
     dxddx_hand = simplify(dxddx_hand); 
 end
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -69,87 +70,89 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% T matrices
-    % Between {c_o} and {c_h}
-    Rpsi_ = param.kinematics.local_geometry.Rpsi_; 
-    Rchco_ = [Rpsi_, zeros(2,1);...
-              0, 0, -1];
-    Tchco_= RpToTrans(Rchco_,[0;0;0]);
+% Between {c_o} and {c_h}
+Rpsi_ = param.kinematics.local_geometry.Rpsi_; 
+Rchco_ = [Rpsi_, zeros(2,1);...
+          0, 0, -1];
+Tchco_= RpToTrans(Rchco_,[0;0;0]);
 
-    % Between object {o} and {c_o}
-    Toco_ = simplify(param.kinematics.local_geometry.object.Tici_);
-    [Roco_, r_oco_] = TransToRp(Toco_);
+% Between object {o} and {c_o}
+Toco_ = simplify(param.kinematics.local_geometry.object.Tici_);
+[Roco_, r_oco_] = TransToRp(Toco_);
 
-    %  Between hand {h} and {c_h}
-    Thch_ = simplify(param.kinematics.local_geometry.hand.Tici_);
-    [Rhch_, r_hch_] = TransToRp(Thch_);
+%  Between hand {h} and {c_h}
+Thch_ = simplify(param.kinematics.local_geometry.hand.Tici_);
+[Rhch_, r_hch_] = TransToRp(Thch_);
 
-    % Between object {o} and {c_h}
-    Toch_ = simplify(Toco_*TransInv(Tchco_)); 
-    Tcho_ = TransInv(Toch_);
-    
-    % Between object {o} and {h}
-    Toh_ = simplify(Toco_ * TransInv(Tchco_) * TransInv(Thch_)); 
- 
+% Between object {o} and {c_h}
+Toch_ = simplify(Toco_*TransInv(Tchco_)); 
+Tcho_ = TransInv(Toch_);
+Rcho_ = Tcho_(1:3,1:3); 
 
-%% Calculating Equation 7 from paper
+% Between object {o} and {h}
+Toh_ = simplify(Toco_ * TransInv(Tchco_) * TransInv(Thch_)); 
 
-% Include rolling/pure rolling acceleration constraints 
+% Between {s} and {h}
+Tsh_ = RpToTrans(Rsh_,r_sh_);
+
+% R between {o} and {s}
+Tho_ = TransInv(Toh_); 
+Rho_ = Tho_(1:3,1:3); 
+Ros_ = RotInv(Rsh_ * Rho_ );
+
+
+%% Calculating Eq. (7) from paper
+% Extract rolling/pure rolling acceleration constraints from param
 friction_model = param.options.friction_model;
 Alpha_ = param.variables.Alpha_; 
 if strcmp(friction_model,'rolling') % Rolling
-    %***** add to param.variables
+    % Rolling includes relative linear acceleration constraint at contact
+    % a_roll  from Eq. (41);
+    % These were calculated in derive_second_order_kinematics.m
     syms fx_ fy_ fz_ real
     ch_F_contact = [zeros(3,1); fx_; fy_; fz_];
     dVrel = [Alpha_; param.kinematics.a_roll_]; % relative accelerations at the contact
-    %Vrel = [Omega_;0;0;0];  % relative twist at the contact
-    %nFree = 3; 
 elseif strcmp(friction_model,'pure-rolling') % Pure Rolling
-    %***** add to param.variables
+    % Pure-rolling includes relative linear acceleration constraint at contact
+    % a_roll  from Eq. (41) and alpha_z_pr from Eq. (45). 
+    % These were calculated in derive_second_order_kinematics.m
     syms tau_z_ fx_ fy_ fz_ real
     ch_F_contact = [zeros(2,1); tau_z_; fx_; fy_; fz_];
     dVrel = [Alpha_(1:2); param.kinematics.alpha_z_pr_; param.kinematics.a_roll_]; % relative accelerations at the contact
-    %Vrel = [Omega_(1:2);0;0;0;0]; % relative twist at the contact
-    %nFree = 2; 
 end
 
-    % Adjoint expressions
-    Ad_Toch_ = Adjoint(Toch_); 
-    Ad_Tcho_ = Adjoint(Tcho_);
-    Ad_Toch_ = Adjoint(TransInv(Tcho_));
-    Ad_Toh_ = Adjoint(Toh_); 
-    
-    Go = param.bodies.object.Go; % Object Spatial Inertia Matrix
-    omega_rel_ = param.kinematics.omega_rel_fqdq1_; 
-    Vrel_ = [omega_rel_;0;0;0];  % relative twist at the contact
-    Vo_ = Ad_Toh_*Vh_ + Ad_Toch_ * Vrel_; % From Eq 2
-    ad_Vo = ad(Vo_);
+% Adjoint expressions
+Ad_Toch_ = Adjoint(Toch_); 
+Ad_Tcho_ = Adjoint(Tcho_);
+Ad_Toh_ = Adjoint(Toh_); 
 
-    % Wrench Expressions
-    gravity = param.dynamics.gravity;
-    mass_o = param.bodies.object.mass_o;
-    s_wrench_g_ = [0;0;0;0;0;-gravity*mass_o];
-    Tho_ = TransInv(Toh_); 
-    Rho_ = Tho_(1:3,1:3); 
-    Ros_ = RotInv(Rsh_euler_ * Rho_ );
-    o_wrench_g_ = simplify(blkdiag(Ros_,Ros_)*s_wrench_g_);
+Go = param.bodies.object.Go; % Object spatial inertia matrix
+omega_rel_ = param.kinematics.omega_rel_fqdq1_; % relative angular velocity at contact omega_rel(q,dq)
+Vrel_ = [omega_rel_;0;0;0];  % relative twist at the contact
+Vso_ = Ad_Toh_*Vsh_ + Ad_Toch_ * Vrel_; % Body twist of object in {o} from Eq. (2) 
+ad_Vso = ad(Vso_);
 
-    % Solve for K4
-    Rcho_ = Tcho_(1:3,1:3); 
-    omega_o_ = Vo_(1:3); 
-    o_r_opo_ = param.bodies.object.fo_; 
-    h_r_hph_ = param.bodies.hand.fh_; 
- % ****** Return K4
-    K4_ = ...
-    Ad_Toh_ * [zeros(3,1); VecToso3(omega_sh_) * (VecToso3(omega_sh_) * h_r_hph_)]...
-    -Ad_Toch_* [VecToso3(omega_rel_)*(Rcho_*omega_o_) ;zeros(3,1)] ...
-    -[zeros(3,1); VecToso3(omega_o_) * (VecToso3(omega_o_)*o_r_opo_)]; 
+% Wrench Expressions
+gravity = param.dynamics.gravity;
+mass_o = param.bodies.object.mass_o;
+s_wrench_g_ = [0;0;0;0;0;-gravity*mass_o]; % gravity wrench in {s}
+o_wrench_g_ = simplify(blkdiag(Ros_,Ros_)*s_wrench_g_); % gravity wrench in {o}
 
-    dV_sh_; % Hand accelerations 
+% Solve for K4
+omega_so_ = Vso_(1:3); % body angular velocity in {o}
+o_r_opo_ = param.bodies.object.fo_; 
+h_r_hph_ = param.bodies.hand.fh_; 
+K4_ = ...
+Ad_Toh_ * [zeros(3,1); VecToso3(omega_sh_) * (VecToso3(omega_sh_) * h_r_hph_)]...
+-Ad_Toch_* [VecToso3(omega_rel_)*(Rcho_*omega_so_) ;zeros(3,1)] ...
+-[zeros(3,1); VecToso3(omega_so_) * (VecToso3(omega_so_)*o_r_opo_)]; 
 
-    % Equation 7: LHS = RHS + RHS2 * dVh_
-    %LHS_ = Ad_Toch_*dVrel - inv(Go)*Ad_Tcho_'*ch_F_contact;
-    RHS1_ = inv(Go)*(ad_Vo'*Go*Vo_ + o_wrench_g_) - K4_;
-    %RHS2_ = - Ad_Toh_;
+dVsh_; % Hand accelerations 
+
+% Equation 7: LHS = RHS + RHS2 * dVsh_
+%LHS_ = Ad_Toch_*dVrel - inv(Go)*Ad_Tcho_'*ch_F_contact;
+RHS1_ = inv(Go)*(ad_Vso'*Go*Vso_ + o_wrench_g_) - K4_;
+%RHS2_ = - Ad_Toh_;
 
 
 %% Deriving rolling dynamics from Eq (8) and (9)
@@ -165,45 +168,42 @@ elseif strcmp(friction_model,'pure-rolling') % Pure Rolling (Eq 9)
 end
 
 if param.options.is_simplify
-    param.dynamics.K5_ = simplify(subs(K5_, P_,P));
-    param.dynamics.K6_ = simplify(subs(K6_, P_,P));
-    param.dynamics.Ad_Toh_ = simplify(subs(Ad_Toh_, P_,P));
-else
-    param.dynamics.K5_ = subs(K5_, P_,P);
-    param.dynamics.K6_ = subs(K6_, P_,P);
-    param.dynamics.Ad_Toh_ = subs(Ad_Toh_, P_,P);
+    K5_ = simplify(subs(K5_, P_,P));
+    K6_ = simplify(subs(K6_, P_,P));
+    Ad_Toh_ = simplify(subs(Ad_Toh_, P_,P));
 end
 
 
 %% Derive full rolling dynamics (Equation 12)
 % Solve explicitly for the alpha and wrench terms from equations (8)/(9)
 % WARNING: May require a large symbolic matrix inversion, can be avoided
-% by setting param.options.is_fast_dynamics to true
-% Equation: alpha_lambda = velTerms + accTerms*dVh_
+% by settingL 
+%   param.options.is_fast_dynamics = true
 
 % States (22): 
-% s =  [theta, beta, gamma, rhx, rhy, rhz, ...
-%       uo_, vo_, uh_, vh_, psi_,...
-%       omega_x, omega_y, omega_z, v_x, v_y, v_z, ... 
-%       duo_, dvo_, duh_, dvh_, dpsi_]
+%  s = [theta, beta, gamma, ...                 % Phi_sh (1:3) - euler orientation {h} in {s} 
+%       r_sh_x, r_sh_y, r_sh_z, ...             % r_sh (4:6) - position of {h} in {s}
+%       uo_, vo_, uh_, vh_, psi_,...            % q (7:11) - contact coordinates
+%       omega_sh_x, omega_sh_y, omega_sh_z, ... % omega_sh (12:14) - rot body vel in {h}
+%       v_sh_x, v_sh_y, v_sh_z, ...             % v_sh (15:17) - linear body vel in {h}
+%       duo_, dvo_, duh_, dvh_, dpsi_]          % dq (18:22) - contact coordinate velocities
 %
-% ds = K7_(s) + K8_(s) * dVh
+% ds = K7_(s) + K8_(s) * dVsh_
     
 if ~param.options.is_fast_dynamics
-    invK5_ = inv(param.dynamics.K5_);
-    velTerms = invK5_* param.dynamics.K6_; 
-    accTerms = invK5_*(- param.dynamics.Ad_Toh_);
+    % Equation: alpha_lambda = velTerms + accTerms*dVsh_
+    invK5_ = inv(K5_);
+    velTerms = invK5_* K6_; 
+    accTerms = invK5_*(- Ad_Toh_);
 
-    
     % Contact wrench function (Eq. (10)/(11)) 
-    alpha_F_contact_ = velTerms - accTerms * dV_sh_; 
+    alpha_F_contact_ = velTerms - accTerms * dVsh_; 
     if strcmp(friction_model,'rolling') % Rolling
         F_contact_ = [alpha_F_contact_(4:6)]; % F_contact_roll = [0;0;0;fx;fy;fz] [Eq. (10)]
     elseif strcmp(friction_model,'pure-rolling') % Pure Rolling
         F_contact_ = [alpha_F_contact_(3:6)]; % F_contact_pr = [0;0;tau_z;fx;fy;fz] [Eq. (11)]
     end
 
-    
     % Deriving equation (12)
     K2_ = subs(param.kinematics.K2_, P_,P);
     K3_ = subs(param.kinematics.K3_, P_,P);
@@ -229,37 +229,42 @@ if ~param.options.is_fast_dynamics
     end
 
     if param.options.is_simplify
-        param.dynamics.full_dynamics_ = simplify(subs(K7_ + K8_ * dV_sh_,P_,P));      
-        param.dynamics.F_contact_ = simplify(subs(F_contact_,P_,P));   
-    else
-        param.dynamics.full_dynamics_ = subs(K7_ + K8_ * dV_sh_,P_,P);
-        param.dynamics.F_contact_ = subs(F_contact_,P_,P);
+        full_dynamics_ = simplify(subs(K7_ + K8_ * dVsh_,P_,P));      
+        F_contact_ = simplify(subs(F_contact_,P_,P));   
     end
-    
-
 end
 
 
-%% Expressions to Export 
+%% Expressions to export
+% State and control variables 
 param.variables.states_hand_ = states_hand_; % full hand state
-param.variables.states_ = [states_hand_(1:6); param.variables.q_; states_hand_(7:12); param.variables.dq_];
-param.variables.dVh_ = dV_sh_; % full hand controls
-param.dynamics.dxddx_hand = dxddx_hand; % full hand dynamics 
-%matlabFunction(dxddx_hand,'file',[dir, 'autoGen_f_handDynamics_fast'],'Vars',{t_, states_hand_, dV_h_});
+param.variables.states_ = [states_hand_(1:6); param.variables.q_; states_hand_(7:12); param.variables.dq_];  % full state s \in 22
+param.variables.dVsh_ = dVsh_; % full hand controls
 
-% Transformation matrix functions 
+% Transformation matrix functions to use for visualization and analysis
 param.functions.fTho = matlabFunction(subs(Tho_,param.bodies.P_,param.bodies.P), 'vars',{param.variables.q_});
 param.functions.fThch = matlabFunction(subs(Thch_,param.bodies.P_,param.bodies.P), 'vars',{param.variables.q_});
 param.functions.fThco = matlabFunction(subs(Thch_*Tcho_,param.bodies.P_,param.bodies.P), 'vars',{param.variables.q_});
-
-Rsh_ = fEulerToR(param.variables.states_(1:3),'XYZ');
-psh_ = param.variables.states_(4:6);
-Tsh_ = RpToTrans(Rsh_,psh_);
 param.functions.fTsh = matlabFunction(Tsh_,'vars',{param.variables.states_(1:6)});
 
-% relative velocity function
-param.functions.fVo = matlabFunction(subs(Vo_,P_,P),'vars',{param.variables.states_});
+% Relative velocity function
+param.functions.fVso = matlabFunction(subs(Vso_,P_,P),'vars',{param.variables.states_});
 
-%% Return
+% full hand dynamics 
+param.dynamics.dxddx_hand = dxddx_hand;
+
+% Dynamic rolling equations from Eq. (8)/(9)
+param.dynamics.K5_ = K5_;
+param.dynamics.K6_ = K6_;
+param.dynamics.Ad_Toh_ = Ad_Toh_;
+
+% Full dynamic rolling equations from Eq. (12) 
+if ~param.options.is_fast_dynamics
+    param.dynamics.full_dynamics_ = full_dynamics_;
+    param.dynamics.F_contact_ = F_contact_;
+end
+
 disp('    DONE.')
+
+
 end
