@@ -6,7 +6,7 @@ is_optimize = param.options.is_simplify; % Should we optimize the exported funct
 
 syms t_ real
 states_ = param.variables.states_;
-controls_ = param.variables.dVh_;
+controls_ = param.variables.dVsh_;
 
 if param.options.is_fast_dynamics
     % Export functions for fast dynamics
