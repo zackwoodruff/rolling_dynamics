@@ -12,8 +12,8 @@ end
 
 % Check pure-rolling assumption isn't violated 
 if friction_model_num ==2
-    if param.sim.omega_xyz0(3)~=0
-        error('Initial conditions violate pure-rolling assumption (omega_z_rel = 0)')
+    if param.sim.omega_rel0(3)~=0
+        error('Initial conditions violate pure-rolling assumption (omega_rel_z = 0)')
     end
 end
 
