@@ -8,7 +8,6 @@
 % Add the src folders to the path 
 tic
 addpath(genpath('../../'))
-set(0,'DefaultFigureWindowStyle','docked')
 
 clear
 clc
@@ -30,7 +29,10 @@ param = initialize_ball_plate();
 %% 1.2 Input Parameters
 param.options.is_simplify = true;
 param.options.friction_model = 'rolling'; %'pure-rolling' or 'rolling';
-param.options.is_fast_dynamics = false; 
+param.options.is_fast_dynamics = false;
+
+param.options.is_inclined = true; % Sets whether plate is tilted or horizontal relative to gravity
+
 % param.options.model = 'ball-plate';
 % param.options.is_generate_figures = false; 
 
@@ -101,28 +103,27 @@ export_dynamics_functions(param)
 % Time and integration tolerances
 param.sim.dt = 0.01;
 param.sim.T = 2*pi; 
-param.sim.tvec = 0:param.sim.dt:param.sim.T ;
-param.sim.tvec_u = param.sim.tvec;
-param.sim.ode_options = odeset('RelTol',1e-6,'AbsTol',1e-8); % set max step size
+param.sim.tvec = 0:param.sim.dt:param.sim.T ; % vector of times to export states
+param.sim.ode_options = odeset('RelTol',1e-6,'AbsTol',1e-8); % set numerical integration tolerances
 
 % Initial Conditions
-param.options.is_inclined = true; 
 if param.options.is_inclined
-    param.sim.Xh0 = [0.1; zeros(5,1)];
+    param.sim.Xh0 = [0.1; zeros(5,1)]; % Initial hand configuration 
 else
-    param.sim.Xh0 = [0; zeros(5,1)];
+    param.sim.Xh0 = [0; zeros(5,1)]; % Initial hand configuration 
 end
-param.sim.q0 = [pi/2; 0; 0; 0; 0];
-param.sim.Vh0 = [0; 0; 7; 0; 0; 0];
-param.sim.omega_xyz0 = [1;0; -7];
-
+param.sim.q0 = [pi/2; 0; 0; 0; 0]; % Initial contact coordinates
+param.sim.Vsh0 = [0; 0; 7; 0; 0; 0]; % Initial hand body twist
+param.sim.omega_rel0 = [1;0; -7]; % Initial relative rotational velocity
+% Calculate initial dq from omega_rel0: 
 param.sim.dq0 = double(subs(param.kinematics.first_order_kinematics_,...
             [param.bodies.P_; param.variables.q_; param.variables.Omega_],...
-            [param.bodies.P;  param.sim.q0;       param.sim.omega_xyz0]));
-param.sim.states0 = [param.sim.Xh0; param.sim.q0; param.sim.Vh0; param.sim.dq0];
+            [param.bodies.P;  param.sim.q0;       param.sim.omega_rel0]));
+param.sim.states0 = [param.sim.Xh0; param.sim.q0; param.sim.Vsh0; param.sim.dq0]; % Initial state vector
 
 % Controls
-param.sim.controls_t = zeros([6,length(param.sim.tvec_u)]);
+param.sim.tvec_u = param.sim.tvec; % time vector for control input
+param.sim.controls_t = zeros([6, length(param.sim.tvec_u)]);
 
 % Simulate rolling dyanmics
 param.sim.states_t = run_dynamic_rolling_simulation(param);
@@ -146,9 +147,10 @@ param.options.visualization.show_contact = true;
 param.options.visualization.is_export=false; 
 param.options.visualization.export_figure_name='plate_ball_spin';
 
-% Run visualiztion 
+% Run visualiztion
+set(0,'DefaultFigureWindowStyle','normal')
 visualize_trajectory(param)
-
+set(0,'DefaultFigureWindowStyle','docked')
 
 
 %**********************************************
