@@ -74,7 +74,8 @@ K2a_ = pt1_ *(pt2_+pt3_+pt4_+pt5_);
 
 
 %K2b
-K2b_ = (E1*omega_xy_).'*Rpsi_*E1*inv(sqrtGo_)*Lo_*dUo_...
+K2b1_ = (E1*omega_xy_).'*Rpsi_*E1*inv(sqrtGo_)*Lo_*dUo_;
+K2b_ = K2b1_...
     +sigma_o_*Gamma_o_barbar_*Wo_...
     +sigma_h_*Gamma_h_barbar_*Wh_... 
     + [sigma_o_*Gamma_o_, sigma_h_*Gamma_h_] * K2a_;
@@ -131,6 +132,39 @@ end
 
 
 %% TODO: Full derivation of pure rolling expression 
+syms a_x_ a_y_ real; 
+%pt6_ = [zeros(2,1); Alpha_(1:2)];
+pt7_ = [a_x_; a_y_; zeros(2,1)];
+
+C5=[sigma_o_*Gamma_o_, sigma_h_*Gamma_h_, -1];
+
+q_=param.variables.q_;
+dC5 = fdiff_t_syms(C5,q_,dq_);
+
+f6_ = dC5*dq_; 
+f7_ = C5(1:4);
+%ddPsi_purerolling_=f6_ + f7_*param.geo.ddU_(1:4);
+
+% ddU1U2 = f8+f9*[v.alpha.x; v.alpha.y]
+f8_=pt1_*(pt2_ + pt3_ + pt4_ + pt5_ - pt7_);
+f9_=pt1_(:,3:4);
+
+% ddpsi = f10 +f11*ddU_12 - alphaz
+f10_ = sigma_o_*Gamma_o_barbar_*Wo_+ sigma_h_*Gamma_h_barbar_*Wh_+ K2b1_;
+f11_ = [sigma_o_*Gamma_o_, sigma_h_*Gamma_h_];
+
+% alpha_z_pure_rolling = f12_ + f13_*[alpha_x; alpha_y]; 
+f12_=f10_-f6_+(f11_-f7_)*f8_;
+f13_=(f11_-f7_)*f9_;
+
+% Check consistency
+alpha_z_pure_rolling = f12_ + f13_*[Alpha_(1:2)];
+if param.options.is_simplify
+    alpha_z_pure_rolling = simplify(alpha_z_pure_rolling);
+end
+
+alpha_z_pure_rolling
+
 
 
 
