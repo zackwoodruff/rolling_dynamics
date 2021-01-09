@@ -327,7 +327,7 @@ xlabel('$t$ (s)')
 % note: momentum is only conserved when hand is stationary because of acceleration
 % control assumption. 
 
-o_Vso_t = param.functions.fVo(states_t');
+o_Vso_t = param.functions.fVso(states_t');
 h_Vsh_t = states_t(:,12:17)';
 
 % Define hand inertia parameters
