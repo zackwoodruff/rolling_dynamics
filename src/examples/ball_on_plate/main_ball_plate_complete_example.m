@@ -60,8 +60,7 @@ disp('    DONE.');
 % From Appendix B-B
 % Returns: Omega_, K1_, first_order_kinematics_, omega_rel_fqdq1_
 %          Rpsi_, E1, Ho_tilda_
-% TODO:
-% - include first order velocity constraints? 
+
 param = derive_first_order_kinematics(param);
 
 
