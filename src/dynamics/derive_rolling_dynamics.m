@@ -69,25 +69,25 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% T matrices
-    % **** put into functions.symbolic.T R r
-    % Between frames c_o and c_h 
+    % Between {c_o} and {c_h}
     Rpsi_ = param.kinematics.local_geometry.Rpsi_; 
     Rchco_ = [Rpsi_, zeros(2,1);...
               0, 0, -1];
-    Rchco_ = Rchco_;
     Tchco_= RpToTrans(Rchco_,[0;0;0]);
 
-    % Object
+    % Between object {o} and {c_o}
     Toco_ = simplify(param.kinematics.local_geometry.object.Tici_);
     [Roco_, r_oco_] = TransToRp(Toco_);
 
-    %  Hand
+    %  Between hand {h} and {c_h}
     Thch_ = simplify(param.kinematics.local_geometry.hand.Tici_);
     [Rhch_, r_hch_] = TransToRp(Thch_);
 
+    % Between object {o} and {c_h}
     Toch_ = simplify(Toco_*TransInv(Tchco_)); 
-    
     Tcho_ = TransInv(Toch_);
+    
+    % Between object {o} and {h}
     Toh_ = simplify(Toco_ * TransInv(Tchco_) * TransInv(Thch_)); 
  
 
