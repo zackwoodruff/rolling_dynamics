@@ -1,3 +1,17 @@
+% export_dynamics_functions.m
+% Zack Woodruff
+% 1/8/2021
+
+% This function exports the dynamics equations as functions in the working
+% directory.
+% If param.options.is_simplify the functions are optimized
+
+% Input:
+% param: structure containing important variables, options, and functions
+
+% Output: 
+% A set of functions in the working directory preceeded with autoGen_
+
 function export_dynamics_functions(param)
 disp('Exporting rolling dynamics functions...')
 
