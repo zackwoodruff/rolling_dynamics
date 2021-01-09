@@ -30,7 +30,7 @@ param = initialize_ball_plate();
 %% 1.2 Input Parameters
 param.options.is_simplify = true;
 param.options.friction_model = 'rolling'; %'pure-rolling' or 'rolling';
-param.options.is_fast_dynamics = true; 
+param.options.is_fast_dynamics = false; 
 % param.options.model = 'ball-plate';
 % param.options.is_generate_figures = false; 
 
