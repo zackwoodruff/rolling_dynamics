@@ -148,9 +148,7 @@ param.options.visualization.is_export=false;
 param.options.visualization.export_figure_name='plate_ball_spin';
 
 % Run visualiztion
-set(0,'DefaultFigureWindowStyle','normal')
 visualize_trajectory(param)
-set(0,'DefaultFigureWindowStyle','docked')
 
 
 %**********************************************

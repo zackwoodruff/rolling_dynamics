@@ -1,6 +1,7 @@
 function visualize_trajectory(param)
 disp('Visualizing rolling trajectory...')
 
+set(0,'DefaultFigureWindowStyle','normal')
 set(0,'defaulttextInterpreter','tex')
 set(0,'defaultLegendInterpreter','tex')
 
@@ -81,4 +82,5 @@ if param.options.visualization.is_export
 end
 
 %% Return
+set(0,'DefaultFigureWindowStyle','docked')
 disp('    DONE.'); 

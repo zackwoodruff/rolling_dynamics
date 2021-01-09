@@ -3,12 +3,12 @@ function analyze_rolling_trajectory(param, states_t)
 % param - parameters, variables, equations 
 % states_t - rolling trajectory states(t) 
 %  states_t = 
-%  [theta, beta, gamma, ...                        % Phi_sh (:,1:3) - euler orientation {h} in {s} 
-%   r_sh_x, r_sh_y, r_sh_z, ...                    % r_sh (:,4:6) - position of {h} in {s}
-%   uo_, vo_, uh_, vh_, psi_,...                   % q (:,7:11) - contact coordinates
-%   h_omega_sh_x, h_omega_sh_y, h_omega_sh_z, ...  % h_omega_sh (:,12:14) - rot body vel {h}
-%   h_v_sh_x, h_v_sh_y, h_v_sh_z, ...              % h_v_sh (:,15:17) - linear body vel {h}
-%   duo_, dvo_, duh_, dvh_, dpsi_]                 % dq (:,18:22) - contact coordinate velocities
+%  [theta_h, beta_h, gamma_h, ...            % Phi_sh (:,1:3) - euler orientation {h} in {s} 
+%   r_sh_x, r_sh_y, r_sh_z, ...              % r_sh (:,4:6) - position of {h} in {s}
+%   uo_, vo_, uh_, vh_, psi_,...             % q (:,7:11) - contact coordinates
+%   omega_sh_x, omega_sh_y, omega_sh_z, ...  % omega_sh (:,12:14) - rot body vel {h}
+%   v_sh_x, v_sh_y, v_sh_z, ...              % v_sh (:,15:17) - linear body vel {h}
+%   duo_, dvo_, duh_, dvh_, dpsi_]           % dq (:,18:22) - contact coordinate velocities
 
 disp('Analyzing rolling trajectory...'); 
 
@@ -17,8 +17,8 @@ disp('Analyzing rolling trajectory...');
 Phi_sh_t = states_t(:,1:3);
 r_sh_t = states_t(:,4:6);
 q_t = states_t(:,7:11);
-h_omega_sh_t = states_t(:,12:14);
-h_v_sh_t = states_t(:,15:17);
+omega_sh_t = states_t(:,12:14);
+v_sh_t = states_t(:,15:17);
 dq_t = states_t(:,18:22);
 qdq_t = [q_t, dq_t]; 
 
@@ -84,13 +84,13 @@ ylabel('m')
 title('Position $(\mathbf{r}_{sh})$')
 
 subplot(2,2,3); 
-h23 = plot(t,h_omega_sh_t);
+h23 = plot(t,omega_sh_t);
 xlabel('$t$ (s)')
 ylabel('rad/s')
 title('Rotational Velocity $(^h\omega_{sh})$')
 
 subplot(2,2,4); 
-h24 = plot(t,h_v_sh_t);
+h24 = plot(t,v_sh_t);
 xlabel('$t$ (s)')
 ylabel('m/s')
 title('Linear Velocity $(^h\mathbf{v}_{sh})$')
