@@ -163,8 +163,11 @@ if param.options.is_simplify
     alpha_z_pure_rolling = simplify(alpha_z_pure_rolling);
 end
 
-alpha_z_pure_rolling
-
+temp = simplify(alpha_z_pure_rolling-alpha_z_pr); 
+if  temp~=0
+    temp
+    error('alpha_z_pr assumption may be invalid')
+end
 
 
 
