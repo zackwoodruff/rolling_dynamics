@@ -14,7 +14,6 @@ param = derive_rolling_dynamics(param);
 %% 3.2 Export dynamics functions
 % From Section V.B
 % Equations used by f_dynamics_handler.m
-param.options.export_directory = current_example_home_directory; 
 export_dynamics_functions(param)
 
 end 
