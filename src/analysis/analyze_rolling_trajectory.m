@@ -281,42 +281,49 @@ if strcmp(param.options.friction_model,'rolling')
     fx_scaled_t = abs(lambda_t(1,:))/mu_s; 
     fy_scaled_t = abs(lambda_t(2,:))/mu_s;
     fz_t = lambda_t(3,:);
-    
-    % forces
-    plot(t,fx_scaled_t,'Color',rgb(1,:),'LineWidth',1.5) % fx
-    plot(t,fy_scaled_t,'Color',rgb(2,:),'LineWidth',1.5) % fy
-    plot(t,fz_t,'Color',rgb(3,:),'LineWidth',1.5) % fz
-    
-    % constraint violations 
-    plot(t(fx_constraint_index),fx_scaled_t(fx_constraint_index),'*r','MarkerSize',3);
-    plot(t(fy_constraint_index),fy_scaled_t(fy_constraint_index),'*g','MarkerSize',3);
-    plot(t(fz_constraint_index),fz_t(fz_constraint_index),'*b','MarkerSize',3);
-    
-    hleg = legend('$||f_x||/\mu_s$', '$||f_y||/\mu_s$', '$f_z$',...
-        '$f_x$ violation', '$f_y$ violation', '$f_z$ violation');
     ylabel('N')
 elseif strcmp(param.options.friction_model,'pure-rolling')
     tau_z_scaled_t = abs(lambda_t(1,:))/mu_spin;
     fx_scaled_t = abs(lambda_t(2,:))/mu_s; 
     fy_scaled_t = abs(lambda_t(3,:))/mu_s;
     fz_t = lambda_t(4,:);
-        
-    % torque/forces
-    plot(t,tau_z_scaled_t,'Color',rgb(3,:),'LineWidth',1.5,'LineStyle',':') % tau z
-    plot(t,fx_scaled_t,'Color',rgb(1,:),'LineWidth',1.5) % fx
-    plot(t,fy_scaled_t,'Color',rgb(2,:),'LineWidth',1.5) % fy
-    plot(t,fz_t,'Color',rgb(3,:),'LineWidth',1.5) % fz
-    
-    % constraint violations
-    plot(t(tau_z_constraint_index),tau_z_scaled_t(tau_z_constraint_index),'.b','MarkerSize',3);
-    plot(t(fx_constraint_index),fx_scaled_t(fx_constraint_index),'*r','MarkerSize',3);
-    plot(t(fy_constraint_index),fy_scaled_t(fy_constraint_index),'*g','MarkerSize',3);
-    plot(t(fz_constraint_index),fz_t(fz_constraint_index),'*b','MarkerSize',3);
-    
-    hleg = legend('$||\tau_z||/\mu_\mathrm{spin}$', '$||f_x|| /\mu_s$', '$||f_y||/\mu_s$', '$f_z$',...
-        '$\tau_z$ violation', '$f_x$ violation', '$f_y$ violation', '$f_z$ violation');
     ylabel('N or Nm')
 end
+
+% torque
+if strcmp(param.options.friction_model,'pure-rolling')
+    htauz = plot(t,tau_z_scaled_t,'Color',rgb(3,:),'LineWidth',1.5,'LineStyle',':'); % tau z
+    legend_array={'$||\tau_z||/\mu_\mathrm{spin}$','$||f_x||/\mu_s$', '$||f_y||/\mu_s$', '$f_z$'};
+else
+    legend_array={'$||f_x||/\mu_s$', '$||f_y||/\mu_s$', '$f_z$'};
+end
+
+% forces
+plot(t,fx_scaled_t,'Color',rgb(1,:),'LineWidth',1.5); % fx
+plot(t,fy_scaled_t,'Color',rgb(2,:),'LineWidth',1.5); % fy
+plot(t,fz_t,'Color',rgb(3,:),'LineWidth',1.5); % fz
+
+% constraint violations
+if strcmp(param.options.friction_model,'pure-rolling')
+    if ~isempty(fx_constraint_index)
+        plot(t(tau_z_constraint_index),tau_z_scaled_t(tau_z_constraint_index),'.b','MarkerSize',3);
+        legend_array{end+1} = '$\tau_z$ violation';
+    end
+end
+if ~isempty(fx_constraint_index)
+    plot(t(fx_constraint_index),fx_scaled_t(fx_constraint_index),'*r','MarkerSize',3);
+    legend_array{end+1} = '$f_x$ violation';
+end
+if ~isempty(fy_constraint_index)
+    plot(t(fy_constraint_index),fy_scaled_t(fy_constraint_index),'*g','MarkerSize',3);
+    legend_array{end+1} = '$f_y$ violation';
+end
+if ~isempty(fz_constraint_index)
+    plot(t(fz_constraint_index),fz_t(fz_constraint_index),'*b','MarkerSize',3);
+    legend_array{end+1} = '$f_z$ violation';
+end     
+
+legend(legend_array)
 title('Friction Constraints')
 xlabel('$t$ (s)')
 
