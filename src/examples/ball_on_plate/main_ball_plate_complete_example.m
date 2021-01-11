@@ -78,22 +78,10 @@ param = derive_second_order_kinematics(param);
  
  
 %**********************************************
-% 3. Derive Dynamics
+% 3. Dynamics
 %**********************************************
-%% 3.1
-% From Section V.A
-% Return K5, K6 (K7 and K8 if full derivation) 
-param.dynamics.gravity = 9.81; 
-param = derive_rolling_dynamics(param);
-
-
-
-%% 3.2 Export dynamics functions
-% From Section V.B
-% Equations used by f_dynamics_handler.m
-param.options.export_directory = current_example_home_directory; 
-export_dynamics_functions(param)
-
+%% Derive (3.1) and export (3.2) rolling dynamics
+param = derive_export_dyamics(param);
 
 
 %**********************************************
