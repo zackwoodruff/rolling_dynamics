@@ -171,6 +171,10 @@ if param.options.is_simplify
     K5_ = simplify(subs(K5_, P_,P));
     K6_ = simplify(subs(K6_, P_,P));
     Ad_Toh_ = simplify(subs(Ad_Toh_, P_,P));
+else
+    K5_ = subs(K5_, P_,P);
+    K6_ = subs(K6_, P_,P);
+    Ad_Toh_ = subs(Ad_Toh_, P_,P); 
 end
 
 
@@ -228,9 +232,13 @@ if ~param.options.is_fast_dynamics
                K3_ * [accTerms(1:2,:); zeros([4,6])]];     
     end
 
-    if param.options.is_simplify
-        full_dynamics_ = simplify(subs(K7_ + K8_ * dVsh_,P_,P));      
-        F_contact_ = simplify(subs(F_contact_,P_,P));   
+    full_dynamics_ = K7_ + K8_ * dVsh_;
+    if param.options.is_simplify % Substitute parameters into expression AND simplify
+        full_dynamics_ = simplify(subs(full_dynamics_,P_,P));      
+        F_contact_ = simplify(subs(F_contact_,P_,P));
+    else % Substitue parameters into expression
+        full_dynamics_ = subs(full_dynamics_,P_,P);
+        F_contact_ = subs(F_contact_,P_,P); 
     end
 end
 
