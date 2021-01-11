@@ -2,17 +2,19 @@
 % Zack Woodruff
 % 11/24/2020
 
-% This code demonstrates derives the rolling dynamics equations for a
+% This code derives the rolling dynamics equations for a
 % ball (sphere) on a plate (plane) and does an open-loop simulation. 
 
-% Add the src folders to the path 
-tic
-addpath(genpath('../../'))
 
 clear
 clc
 close all
 
+% Set directory to appropriate directory and add the src folders to the path
+tic
+current_example_home_directory = fileparts(matlab.desktop.editor.getActiveFilename);
+cd(current_example_home_directory);
+addpath(genpath('../../'))
 
 
 %**********************************************
@@ -25,11 +27,12 @@ close all
 %-1.1.4 Combined Parameters
 %-1.1.5 Friction Parameters
 param = initialize_ball_plate();
+%param = initialize_ellipsoid_dish();
 
 %% 1.2 Input Parameters
 param.options.is_simplify = true;
 param.options.friction_model = 'rolling'; %'pure-rolling' or 'rolling';
-param.options.is_fast_dynamics = false;
+param.options.is_fast_dynamics = true;
 
 param.options.is_inclined = true; % Sets whether plate is tilted or horizontal relative to gravity
 
@@ -68,8 +71,9 @@ param = derive_first_order_kinematics(param);
 % From Appendix B-C
 % Returns: Alpha_, K2_, K3_, second_order_kinematics_, a_roll_, alpha_z_pr_
 % TODO: 
-% - add full derivation of alpha_z
- param = derive_second_order_kinematics(param);
+% - Test alpha_z full derivation with pure-rolling
+% - Improve documentation 
+param = derive_second_order_kinematics(param);
 
  
  
@@ -87,7 +91,7 @@ param = derive_rolling_dynamics(param);
 %% 3.2 Export dynamics functions
 % From Section V.B
 % Equations used by f_dynamics_handler.m
-param.options.export_directory = pwd; 
+param.options.export_directory = current_example_home_directory; 
 export_dynamics_functions(param)
 
 
@@ -105,22 +109,32 @@ param.sim.T = 2*pi;
 param.sim.tvec = 0:param.sim.dt:param.sim.T ; % vector of times to export states
 param.sim.ode_options = odeset('RelTol',1e-6,'AbsTol',1e-8); % set numerical integration tolerances
 
-% Initial Conditions
-if param.options.is_inclined
-    param.sim.Xh0 = [0.1; zeros(5,1)]; % Initial hand configuration 
+%%
+if 1
+    % Initial Conditions
+    if param.options.is_inclined
+        param.sim.Xh0 = [0.1; zeros(5,1)]; % Initial hand configuration 
+    else
+        param.sim.Xh0 = [0; zeros(5,1)]; % Initial hand configuration 
+    end
+    param.sim.q0 = [pi/2; 0; 0; 0; 0]; % Initial contact coordinates
+    param.sim.Vsh0 = [0; 0; 7; 0; 0; 0]; % Initial hand body twist
+    param.sim.omega_rel0 = [1;0; -7]; % Initial relative rotational velocity
 else
-    param.sim.Xh0 = [0; zeros(5,1)]; % Initial hand configuration 
+    param.sim.Xh0 = [0; zeros(5,1)]; %0.1
+    param.sim.q0 = [pi/2; 0; pi/2; 0; 0];
+    param.sim.Vsh0 = [0; 0; 0; 0; 0; 0];
+    param.sim.omega_rel0 = [-2; 1; 0];       
 end
-param.sim.q0 = [pi/2; 0; 0; 0; 0]; % Initial contact coordinates
-param.sim.Vsh0 = [0; 0; 7; 0; 0; 0]; % Initial hand body twist
-param.sim.omega_rel0 = [1;0; -7]; % Initial relative rotational velocity
+        
+        
 % Calculate initial dq from omega_rel0: 
 param.sim.dq0 = double(subs(param.kinematics.first_order_kinematics_,...
             [param.bodies.P_; param.variables.q_; param.variables.Omega_],...
             [param.bodies.P;  param.sim.q0;       param.sim.omega_rel0]));
 param.sim.states0 = [param.sim.Xh0; param.sim.q0; param.sim.Vsh0; param.sim.dq0]; % Initial state vector
 
-% Controls
+%% Controls
 param.sim.tvec_u = param.sim.tvec; % time vector for control input
 param.sim.controls_t = zeros([6, length(param.sim.tvec_u)]);
 
