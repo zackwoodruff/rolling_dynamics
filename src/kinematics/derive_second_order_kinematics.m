@@ -37,7 +37,8 @@ Lo_ = param.kinematics.local_geometry.object.L_;
 Lo_bar_ = param.kinematics.local_geometry.object.Lbar_;
 Lo_barbar_ = param.kinematics.local_geometry.object.Lbarbar_;
 
-    
+P = param.bodies.P; 
+P_ = param.bodies.P_;
 %% Extract velocity terms from param
 dq_=param.variables.dq_;
 dUo_=dq_(1:2);
@@ -105,34 +106,27 @@ if param.options.is_simplify
 end
 
 
-%% Second Order Rolling and Pure-Rolling Constraints 
+%% Second Order Rolling Constraint a_roll
 % Linear acceleration constraints - Eq. (41)
 axy_ = -E1*Rpsi_*sqrtGo_*dUo_*omega_z_;
 az_ = Lo_bar_*Wo_+Lh_bar_*Wh_+2*(E1'*omega_xy_)'*Rpsi_*sqrtGo_*dUo_; % Non-breaking contact constraint 
-a_roll = [axy_; az_]; % Eq. (41) 
-
-% Rotational acceleration constraints (pure-rolling) - Eq. 45)
-alpha_z_pr = ((E1*omega_xy_).'*Rpsi_*E1*inv(sqrtGo_)*Lo_*dUo_);
+a_roll_ = [axy_; az_]; % Eq. (41) 
 
 if param.options.is_simplify
-    a_roll = simplify(a_roll); 
-    alpha_z_pr = simplify(alpha_z_pr);
+    a_roll_ = simplify(subs(a_roll_,P_,P)); 
+else
+    a_roll_ = subs(a_roll_,P_,P); 
 end
 
 
-%% Full second-order kinematics equation with linear acceleration constraints a_roll substituded
+%% Second Pure-Rolling Constraint alpha_z_pr
+%Full derivation of pure rolling expression 
+
 % Initialize variables for second order kinematics equations
+syms a_x_ a_y_ real; 
 syms alpha_x_ alpha_y_ alpha_z_ real
 Alpha_ = [alpha_x_; alpha_y_; alpha_z_];
 
-second_order_kinematics_ = (K2_+K3_*[Alpha_; a_roll]); 
-if param.options.is_simplify
-    second_order_kinematics_ = simplify(second_order_kinematics_); 
-end
-
-
-%% TODO: Full derivation of pure rolling expression 
-syms a_x_ a_y_ real; 
 %pt6_ = [zeros(2,1); Alpha_(1:2)];
 pt7_ = [a_x_; a_y_; zeros(2,1)];
 
@@ -163,12 +157,31 @@ if param.options.is_simplify
     alpha_z_pure_rolling = simplify(alpha_z_pure_rolling);
 end
 
-temp = simplify(alpha_z_pure_rolling-alpha_z_pr); 
+
+%% Compare results to EQ.(45) in paper
+
+% Rotational acceleration constraints (pure-rolling) - Eq. 45)
+alpha_z_pr_ = ((E1*omega_xy_).'*Rpsi_*E1*inv(sqrtGo_)*Lo_*dUo_);
+
+temp = simplify(alpha_z_pure_rolling-alpha_z_pr_); 
 if  temp~=0
     temp
     error('alpha_z_pr assumption may be invalid')
 end
 
+% Simplify the reults
+if param.options.is_simplify
+    alpha_z_pr_ = simplify(subs(alpha_z_pr_,P_,P));
+else
+    alpha_z_pr_ = subs(alpha_z_pr_,P_,P);
+end
+
+
+%% Full second-order kinematics equation with linear acceleration constraints a_roll substituded
+second_order_kinematics_ = (K2_+K3_*[Alpha_; a_roll_]); 
+if param.options.is_simplify
+    second_order_kinematics_ = simplify(second_order_kinematics_); 
+end
 
 
 %% Expressions to export
@@ -183,8 +196,8 @@ param.kinematics.K3_ = K3_;
 param.kinematics.second_order_kinematics_ = second_order_kinematics_;
 
 % Velocity and acceleration terms 
-param.kinematics.a_roll_ = a_roll;
-param.kinematics.alpha_z_pr_ = alpha_z_pr;
+param.kinematics.a_roll_ = a_roll_;
+param.kinematics.alpha_z_pr_ = alpha_z_pr_;
 
 disp('    DONE.')
 end
