@@ -37,7 +37,7 @@ param = initialize_ball_plate();
 %% 1.2 Input Parameters
 param.options.is_simplify = true;
 param.options.friction_model = 'rolling'; %'pure-rolling' or 'rolling';
-param.options.is_fast_dynamics = true;
+param.options.is_fast_dynamics = false;
 
 param.options.is_inclined = true; % Sets whether plate is tilted or horizontal relative to gravity
 param.options.export_directory = current_example_home_directory; 
