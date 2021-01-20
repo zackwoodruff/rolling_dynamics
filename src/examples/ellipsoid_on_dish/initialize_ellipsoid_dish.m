@@ -6,7 +6,7 @@
 % and returns them in the param structure
 
 function param = initialize_ellipsoid_dish()
-disp('Initializing ball and plate surface parameterizations...')
+disp('Initializing ellipsoid and ellipsoidal dish surface parameterizations...')
 
 %% 1.1.1  Symbolic Variables 
     syms uo_ vo_ uh_ vh_ psi_ real 
