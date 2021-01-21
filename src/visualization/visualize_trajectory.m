@@ -6,8 +6,13 @@ set(0,'defaulttextInterpreter','tex')
 set(0,'defaultLegendInterpreter','tex')
 
 figure(10); clf; hold on
-objects = initialize_surface_visualizations(param,0.1,0.01); %(param,0.03,0.005)
-
+if isfield(param.options.visualization,'frame_size')
+    frame_length = param.options.visualization.frame_size(1); 
+    frame_radius = param.options.visualization.frame_size(2); 
+    objects = initialize_surface_visualizations(param,frame_length,frame_radius); %(param,0.03,0.005)
+else
+    objects = initialize_surface_visualizations(param); 
+end
 % Set the size of the figure 
 figure_size = param.options.visualization.figure_size;
 set(gcf,'Units', 'inches', 'PaperSize', figure_size, 'PaperPositionMode','auto', 'Position', [0,0,figure_size])

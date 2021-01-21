@@ -119,7 +119,7 @@ param.options.visualization.zlim = [-0.1,4.5]*0.1;
 param.options.visualization.view = [-42,35];
 param.options.visualization.figure_size = [7, 7];
 param.options.visualization.show_contact = true; 
-
+param.options.visualization.frame_size = [0.1,0.01]; 
 param.options.visualization.is_export=false; 
 param.options.visualization.export_figure_name='plate_ball_spin';
 
