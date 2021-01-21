@@ -71,7 +71,7 @@ param = derive_export_dyamics(param);
 % 4.1
 % From Section V.C
 %Simulate rolling using either the full dynamics or the partial dynamics 
-
+param.options.is_inclined = false
 % Time and integration tolerances
 param.sim.dt = 0.01;
 param.sim.T = 2*pi; 
@@ -80,14 +80,17 @@ param.sim.ode_options = odeset('RelTol',1e-6,'AbsTol',1e-8); % set numerical int
 
 % Initial Conditions
 if param.options.is_inclined
-    param.sim.Xh0 = [0.1; zeros(5,1)]; % Initial hand configuration 
+    param.sim.Xh0 = [0.1; zeros(5,1)]/10; % Initial hand configuration 
 else
     param.sim.Xh0 = [0; zeros(5,1)]; % Initial hand configuration 
 end
 param.sim.q0 = [pi/2; 0; 0; 0; 0]; % Initial contact coordinates
+%param.sim.Vsh0 = [0; 0; 7; 0; 0; 0]; % Initial hand body twist
+%param.sim.omega_rel0 = [1;0; -7]; % Initial relative rotational velocity
 param.sim.Vsh0 = [0; 0; 7; 0; 0; 0]; % Initial hand body twist
-param.sim.omega_rel0 = [1;0; -7]; % Initial relative rotational velocity
+param.sim.omega_rel0 = [1;0; -param.sim.Vsh0(3)]; % Initial relative rotational velocity
         
+
 % Calculate initial dq from omega_rel0: 
 param.sim.dq0 = double(subs(param.kinematics.first_order_kinematics_,...
             [param.bodies.P_; param.variables.q_; param.variables.Omega_],...
@@ -109,9 +112,9 @@ param.sim.states_t = run_dynamic_rolling_simulation(param);
 % 5.1 Visualize rolling trajectory 
 
 % Set Options
-param.options.visualization.xlim = [-8,8];
-param.options.visualization.ylim = [-7,7];
-param.options.visualization.zlim = [-5,4.5];
+param.options.visualization.xlim = [-6.5,6.5]*0.1;
+param.options.visualization.ylim = [-6.5,6.5]*0.1;
+param.options.visualization.zlim = [-0.1,4.5]*0.1;
 
 param.options.visualization.view = [-42,35];
 param.options.visualization.figure_size = [7, 7];
@@ -142,13 +145,9 @@ analyze_rolling_trajectory(param, param.sim.states_t)
 param.sim.analytical_comparison = compare_plate_ball_to_analytical_solution(param,true);
 
 
+
 %% 7. End program
 toc
-
-
-
-
-
 
 
 

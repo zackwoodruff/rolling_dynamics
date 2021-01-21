@@ -6,7 +6,7 @@ set(0,'defaulttextInterpreter','tex')
 set(0,'defaultLegendInterpreter','tex')
 
 figure(10); clf; hold on
-objects = initialize_surface_visualizations(param); %(param,0.03,0.005)
+objects = initialize_surface_visualizations(param,0.1,0.01); %(param,0.03,0.005)
 
 % Set the size of the figure 
 figure_size = param.options.visualization.figure_size;
@@ -44,7 +44,7 @@ for i= 1:resolution:length(param.sim.states_t)
     % Plot contact location trajectory in space frame {s}
     if show_contact
         if i==1
-            h_contact=plot3(Tsch_ti(1,4),Tsch_ti(2,4),Tsch_ti(3,4),':k','LineWidth',2); 
+            h_contact=plot3(Tsch_ti(1,4),Tsch_ti(2,4),Tsch_ti(3,4),':k','LineWidth',1.5); 
         else
            h_contact.XData=[h_contact.XData, Tsch_ti(1,4)];
            h_contact.YData=[h_contact.YData, Tsch_ti(2,4)];

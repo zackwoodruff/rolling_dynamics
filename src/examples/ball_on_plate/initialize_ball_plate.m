@@ -22,7 +22,7 @@ disp('Initializing ball and plate surface parameterizations...')
 %% 1.1.2 Object Geometry and Inertial Properties
     syms radius_o_ real
     param.bodies.object.parameters_o_ = [radius_o_]; % object symbolic varible(s)
-    param.bodies.object.parameters_o = [2]; % object symbolic varible value(s) (old 0.035)
+    param.bodies.object.parameters_o = [0.2]; % object symbolic varible value(s) (old 0.035)
     param.bodies.object.fo_=[radius_o_*sin(uo_)*cos(vo_);radius_o_*sin(uo_)*sin(vo_);radius_o_*cos(uo_)]; % object shape parameterization (sphere)
     param.functions.ffo=matlabFunction(subs(param.bodies.object.fo_,...
                                             param.bodies.object.parameters_o_,...
@@ -34,7 +34,7 @@ disp('Initializing ball and plate surface parameterizations...')
     assumeAlso(vo_>param.bodies.object.v_range_o(1) & vo_<param.bodies.object.v_range_o(2)) % add limits to sym variable assumptions
 
     % Inertia terms
-    param.bodies.object.mass_o = 1; %kg  (old 0.216)
+    param.bodies.object.mass_o = 0.1; %kg  (old 0.216)
     radius_o = param.bodies.object.parameters_o; 
     inertia_o = 2/5 * param.bodies.object.mass_o * radius_o^2; % rot inertia of a sphere 
     Io = eye(3) * inertia_o;
@@ -46,7 +46,7 @@ disp('Initializing ball and plate surface parameterizations...')
 %% 1.1.3 Hand Geometry 
     syms side_plate_ real
     param.bodies.hand.parameters_h_ = side_plate_; % hand symbolic varible(s)
-    param.bodies.hand.parameters_h = 5; % hand symbolic varible value(s) (old 0.2)
+    param.bodies.hand.parameters_h = 0.5; % hand symbolic varible value(s) (old 0.2)
     param.bodies.hand.fh_=[uh_;vh_;0*uh_]; % hand shape parameterization (plane)
     param.functions.ffh = @(uh,vh)[uh;vh;zeros(size(uh))]; % hand shape parameterization function
     param.bodies.hand.u_range_h = [-param.bodies.hand.parameters_h,param.bodies.hand.parameters_h]; % uh limits
