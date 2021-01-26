@@ -91,6 +91,7 @@ param.sim.states0 = [param.sim.Xh0; param.sim.q0; param.sim.Vsh0; param.sim.dq0]
 % Controls
 param.sim.tvec_u = param.sim.tvec; % time vector for control input
 param.sim.controls_t = zeros([6, length(param.sim.tvec_u)]);
+param.sim.controls_t(4,:)=[repmat(1,1,125), repmat(-1,1,250), repmat(1,1,125), repmat(0,1,501)]*1.5;
 
 % Simulate rolling dyanmics
 param.sim.states_t = run_dynamic_rolling_simulation(param);
@@ -103,16 +104,17 @@ param.sim.states_t = run_dynamic_rolling_simulation(param);
 % 5.1 Visualize rolling trajectory 
 
 % Set Options
-param.options.visualization.xlim = [-8,8];
-param.options.visualization.ylim = [-7,7];
-param.options.visualization.zlim = [-5,4.5];
+param.options.visualization.xlim = [-9,12];
+param.options.visualization.ylim = [-4,4];
+param.options.visualization.zlim = [-4,1];
 
 param.options.visualization.view = [-42,35];
 param.options.visualization.figure_size = [7, 7];
-param.options.visualization.show_contact = true; 
+param.options.visualization.show_contact = false; 
+param.options.visualization.frame_size = [0.5,0.07]; 
 
-param.options.visualization.is_export=true; 
-param.options.visualization.export_figure_name='ellipsoid_dish';
+param.options.visualization.is_export=false; 
+param.options.visualization.export_figure_name='ellipsoid_dish_lines';
 
 % Run visualiztion
 visualize_trajectory(param)
