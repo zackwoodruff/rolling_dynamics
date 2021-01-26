@@ -42,7 +42,7 @@ Z=reshape(xyz(3,:),size(U));
 outputs.x_h=X;
 outputs.y_h=Y;
 outputs.z_h=Z;
-outputs.S_h=surf(X,Y,Z,'EdgeColor','none','FaceColor','red','FaceAlpha',0.4);
+outputs.S_h=surf(X,Y,Z,'EdgeColor','black','FaceColor','red','FaceAlpha',0.4);
 
 
 %% Initilize the coordinate systems 
