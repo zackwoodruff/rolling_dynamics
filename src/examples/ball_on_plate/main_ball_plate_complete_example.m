@@ -71,10 +71,10 @@ param = derive_export_dyamics(param);
 % 4.1
 % From Section V.C
 %Simulate rolling using either the full dynamics or the partial dynamics 
-param.options.is_inclined = false
+param.options.is_inclined = false; 
 % Time and integration tolerances
 param.sim.dt = 0.01;
-param.sim.T = 2*pi; 
+param.sim.T = 10; 
 param.sim.tvec = 0:param.sim.dt:param.sim.T ; % vector of times to export states
 param.sim.ode_options = odeset('RelTol',1e-6,'AbsTol',1e-8); % set numerical integration tolerances
 
@@ -112,17 +112,22 @@ param.sim.states_t = run_dynamic_rolling_simulation(param);
 % 5.1 Visualize rolling trajectory 
 
 % Set Options
-param.options.visualization.xlim = [-6.5,6.5]*0.1;
-param.options.visualization.ylim = [-6.5,6.5]*0.1;
+%param.options.visualization.xlim = [-6.5,6.5]*0.1;
+%param.options.visualization.ylim = [-6.5,6.5]*0.1;
+param.options.visualization.xlim = [-7,7]*0.1;
+param.options.visualization.ylim = [-7,7]*0.1;
 param.options.visualization.zlim = [-0.1,4.5]*0.1;
 
 param.options.visualization.view = [-42,35];
 param.options.visualization.figure_size = [7, 7];
-param.options.visualization.show_contact = true; 
+param.options.visualization.show_contact = false; 
 param.options.visualization.frame_size = [0.1,0.01]; 
-param.options.visualization.is_export=false; 
-param.options.visualization.export_figure_name='plate_ball_spin';
-
+param.options.visualization.is_export=true; 
+if param.options.is_inclined
+    param.options.visualization.export_figure_name='plate_ball_spin_inclined2';
+else
+    param.options.visualization.export_figure_name='plate_ball_spin2';
+end
 % Run visualiztion
 visualize_trajectory(param)
 

@@ -19,13 +19,28 @@ set(gcf,'Units', 'inches', 'PaperSize', figure_size, 'PaperPositionMode','auto',
 
 % Set font sizes and axis lavels 
 set(gca,'FontSize',12,'TickLabelInterpreter','Latex')
-xlabel('$x$ (m)', 'interpreter','latex')%,'Position',[0.0300   -0.2626   -0.1377]);
-ylabel('$y$ (m)', 'interpreter','latex')%,'Position',[-0.2639    0.0134   -0.1469]);
-zlabel('$z$ (m)', 'interpreter','latex')
+%xlabel('$x$', 'interpreter','latex');%,'Position',[1.22,-9.59,-6.58])%,'Position',[0.0300   -0.2626   -0.1377]);
+%ylabel('$y$', 'interpreter','latex');%,'Position',[-10.4237,1.176,-6.068])%,'Position',[-0.2639    0.0134   -0.1469]);
+%zlabel('$z$', 'interpreter','latex');%,'Position',[-8.9458,8.2839,0.2088])
+
+%xlabel('$x$', 'interpreter','latex','Position',[0.0960, -0.8064, -0.0843])%,'Position',[0.0300   -0.2626   -0.1377]);
+%ylabel('$y$', 'interpreter','latex','Position',[-0.83, 0.084, -0.0923])%,'Position',[-0.2639    0.0134   -0.1469]);
+%zlabel('$z$', 'interpreter','latex','Position',[-0.76, 0.75, 0.22])
+
+xlabel(' ');
+ylabel(' ');
+zlabel(' ');
+%set(gca,'visible','off')
+%set(findall(gca, 'type', 'text'), 'visible', 'on')
+set(gca,'xcolor','none')
+set(gca,'ycolor','none')
+set(gca,'zcolor','none')
+
 xlim(param.options.visualization.xlim);
 ylim(param.options.visualization.ylim);
 zlim(param.options.visualization.zlim);
 view(param.options.visualization.view);
+
 
 show_contact = param.options.visualization.show_contact;
 resolution = round(length(param.sim.tvec)/100);

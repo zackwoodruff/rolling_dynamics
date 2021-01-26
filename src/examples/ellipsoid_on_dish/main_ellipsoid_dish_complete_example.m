@@ -72,7 +72,7 @@ param = derive_export_dyamics(param);
 
 % Time and integration tolerances
 param.sim.dt = 0.01;
-param.sim.T = 2*pi; 
+param.sim.T = 10; 
 param.sim.tvec = 0:param.sim.dt:param.sim.T ; % vector of times to export states
 param.sim.ode_options = odeset('RelTol',1e-6,'AbsTol',1e-8); % set numerical integration tolerances
 
@@ -111,7 +111,7 @@ param.options.visualization.view = [-42,35];
 param.options.visualization.figure_size = [7, 7];
 param.options.visualization.show_contact = true; 
 
-param.options.visualization.is_export=false; 
+param.options.visualization.is_export=true; 
 param.options.visualization.export_figure_name='ellipsoid_dish';
 
 % Run visualiztion
