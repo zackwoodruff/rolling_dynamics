@@ -184,7 +184,7 @@ end
 % rolling: lambda_t = [fx; fy; fz]
 % pure rolling: lambda_t = [tau_z; fx; fy; fz]
 
-if param.options.is_fast_dynamics %  General method 
+if param.options.is_partial_dynamics %  General method 
     if strcmp(param.options.friction_model,'rolling')
         lambda_t = zeros(3,npts); 
     elseif strcmp(param.options.friction_model,'pure-rolling')
@@ -397,6 +397,7 @@ ylabel('$\Delta E_\mathrm{total}$ (J)') %(m/s^2) and (rad/s^2)
 % end
 
 
+
 %% End Analysis
 set(0,'defaulttextInterpreter','tex')
 set(0,'defaultLegendInterpreter','tex')
@@ -404,64 +405,3 @@ set(0,'defaultLegendInterpreter','tex')
 
 disp('    DONE.'); 
 return 
-
-
-
-
-
-
-
-
-
-
-
-
-%% Compare dE/dT to rotational work equation dE/dt = tau_z*omega_z
-% if strcmp(param.dynamics.rolling_type,'pure')
-%     figure(7); clf
-%     subplot(4,1,1)
-%     plot(t, noslip_t(3,:)')
-%     ylabel('$\omega_z$')
-%     xlabel('$t$')
-% 
-%     subplot(4,1,2)
-%     plot(t,lambda_t(1,:),'Color',rgb(3,:),'LineWidth',1.5,'LineStyle',':') % tau z
-%     ylabel('$\tau_z$')
-%     xlabel('$t$')
-% 
-%     subplot(4,1,3);
-%     deltaE = Etotal-Etotal(1); 
-%     plot(t,deltaE)
-%     ylabel('$E(t)-E(0)$')
-%     xlabel('$t$')
-% 
-%     subplot(4,1,4); hold on
-%     plot(t,derivative(deltaE,1,2)/diff(t(1:2)))
-%     plot(t,noslip_t(3,:).*lambda_t(1,:),'o','MarkerSize',2)
-%     ylabel('$dE/dt$')
-%     xlabel('$t$')
-%     legend('KE/PE func','$\tau_z \omega_z$')
-% end
-
-%% Compare domega and alpha
-% dt=diff(t(1:2)); 
-% %alphax_num=derivative(noslip_t(1:end) 
-% %alphay_num=noslip_t
-% %alphaz_num=noslip_t
-% 
-% omega_xy = param.functions.fomegaxy(qdq_t');
-% omega_z = param.functions.fomegaz(qdq_t');
-% alpha_num=derivative([omega_xy;omega_z],1,2)./dt; 
-% 
-% figure(8)
-% subplot(3,1,1)
-% plot(t,alpha_t',t, alpha_num')
-% legend('$\alpha_x$','$\alpha_y$','$\alpha_z$')
-% subplot(3,1,2)
-% plot(t,alpha_t(1:2,:)'-alpha_num(1:2,:)')
-% title('$\alpha_{xy}$ compare')
-% subplot(3,1,3)
-% plot(t,alpha_t(3,:)'-alpha_num(3,:)')
-% title('$\alpha_z$ compare')
-
-end
