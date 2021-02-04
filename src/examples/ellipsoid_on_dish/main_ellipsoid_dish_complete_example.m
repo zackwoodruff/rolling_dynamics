@@ -1,10 +1,9 @@
 % main_ellipsoid_dish_complete_example.m
 % Zack Woodruff
-% 1/11/2021
+% 2/4/2021
 
 % This code derives the rolling dynamics equations for a
 % ellipsoid in an ellipsoidal dish and does an open-loop simulation. 
-
 
 clear
 clc
@@ -21,6 +20,7 @@ addpath('../../visualization')
 addpath('../../analysis')
 
 
+
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 1. Initialization 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -32,15 +32,14 @@ addpath('../../analysis')
 %-1.1.5 Friction Parameters
 param = initialize_ellipsoid_dish();
 
+
 %% 1.2 Input Parameters
-param.options.is_simplify = false;
+param.options.is_simplify = false; % Option to simplify symbolic expressions in derivation
 param.options.friction_model = 'pure-rolling'; %'pure-rolling' or 'rolling';
-param.options.is_fast_dynamics = true;
+param.options.is_partial_dynamics = true; % Is partial dynamics that calculates \dot{s} at each timestep? (otherwise full dynamics expression derived);
 
 param.options.is_inclined = true; % Sets whether plate is tilted or horizontal relative to gravity
 param.options.export_directory = current_example_home_directory; 
-% param.options.model = 'ball-plate';
-% param.options.is_generate_figures = false; 
 
 
 
@@ -103,18 +102,17 @@ param.sim.states_t = run_dynamic_rolling_simulation(param);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 5.1 Visualize rolling trajectory 
 
-% Set Options
-param.options.visualization.xlim = [-9,12];
-param.options.visualization.ylim = [-4,4];
-param.options.visualization.zlim = [-4,1];
-
-param.options.visualization.view = [-42,35];
-param.options.visualization.figure_size = [7, 7];
-param.options.visualization.show_contact = false; 
-param.options.visualization.frame_size = [0.5,0.07]; 
-
-param.options.visualization.is_export=false; 
-param.options.visualization.export_figure_name='ellipsoid_dish_lines';
+% Set options for visualization
+param.options.visualization.xlim = [-9,12]; % m
+param.options.visualization.ylim = [-4,4]; % m
+param.options.visualization.zlim = [-4,1]; % m
+param.options.visualization.view = [-42,35]; % [az, el]
+param.options.visualization.figure_size = [7, 7]; %in
+param.options.visualization.show_contact = false;  % Option to show contact location over time in space frame {s} 
+param.options.visualization.frame_size = [0.5,0.07]; % length and radius of coordinate frame axes (m)
+param.options.visualization.is_show_hand_edges=true; % Show edges of parameterization lines on surface?
+param.options.visualization.is_export=false;  % Export video of the animation? 
+param.options.visualization.export_figure_name='ellipsoid_dish';
 
 % Run visualiztion
 visualize_trajectory(param)
@@ -125,14 +123,12 @@ visualize_trajectory(param)
 % 6. Analyze Results 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 6.1
-% TODO: 
-% - Remove extra scrp code from the end 
 analyze_rolling_trajectory(param, param.sim.states_t)
 
 
 
 %% 7. End program
-toc
+toc % Print elaped time 
 
 
 

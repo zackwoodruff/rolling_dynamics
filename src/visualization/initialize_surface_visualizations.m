@@ -10,6 +10,15 @@ end
 
 npts = 50; % Sets the fineness of the surface visualization
 
+if isfield(param.options.visualization,'is_show_hand_edges')
+    if param.options.visualization.is_show_hand_edges
+        hand_edge_color='black';
+    else
+        hand_edge_color='none';
+    end
+else
+    hand_edge_color='none';
+end
 
 %% Initialize Object
 ulist = linspace(param.bodies.object.u_range_o(1),param.bodies.object.u_range_o(2),npts) ;
@@ -42,7 +51,7 @@ Z=reshape(xyz(3,:),size(U));
 outputs.x_h=X;
 outputs.y_h=Y;
 outputs.z_h=Z;
-outputs.S_h=surf(X,Y,Z,'EdgeColor','black','FaceColor','red','FaceAlpha',0.4);
+outputs.S_h=surf(X,Y,Z,'EdgeColor',hand_edge_color,'FaceColor','red','FaceAlpha',0.4);
 
 
 %% Initilize the coordinate systems 

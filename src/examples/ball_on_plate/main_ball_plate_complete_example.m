@@ -1,10 +1,9 @@
 % main_ball_plate_complete_example.m
 % Zack Woodruff
-% 11/24/2020
+% 2/4/2021
 
 % This code derives the rolling dynamics equations for a
 % ball (sphere) on a plate (plane) and does an open-loop simulation. 
-
 
 clear
 clc
@@ -35,14 +34,12 @@ param = initialize_ball_plate();
 
 
 %% 1.2 Input Parameters
-param.options.is_simplify = true;
+param.options.is_simplify = true; % Option to simplify symbolic expressions in derivation
 param.options.friction_model = 'rolling'; %'pure-rolling' or 'rolling';
-param.options.is_fast_dynamics = false;
+param.options.is_partial_dynamics = false; % Is partial dynamics that calculates \dot{s} at each timestep? (otherwise full dynamics expression derived); 
 
 param.options.is_inclined = true; % Sets whether plate is tilted or horizontal relative to gravity
 param.options.export_directory = current_example_home_directory; 
-% param.options.model = 'ball-plate';
-% param.options.is_generate_figures = false; 
 
 
 
@@ -71,7 +68,7 @@ param = derive_export_dyamics(param);
 % 4.1
 % From Section V.C
 %Simulate rolling using either the full dynamics or the partial dynamics 
-param.options.is_inclined = false; 
+param.options.is_inclined = true; 
 % Time and integration tolerances
 param.sim.dt = 0.01;
 param.sim.T = 10; 
@@ -85,8 +82,6 @@ else
     param.sim.Xh0 = [0; zeros(5,1)]; % Initial hand configuration 
 end
 param.sim.q0 = [pi/2; 0; 0; 0; 0]; % Initial contact coordinates
-%param.sim.Vsh0 = [0; 0; 7; 0; 0; 0]; % Initial hand body twist
-%param.sim.omega_rel0 = [1;0; -7]; % Initial relative rotational velocity
 param.sim.Vsh0 = [0; 0; 7; 0; 0; 0]; % Initial hand body twist
 param.sim.omega_rel0 = [1;0; -param.sim.Vsh0(3)]; % Initial relative rotational velocity
         
@@ -111,23 +106,21 @@ param.sim.states_t = run_dynamic_rolling_simulation(param);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 5.1 Visualize rolling trajectory 
 
-% Set Options
-%param.options.visualization.xlim = [-6.5,6.5]*0.1;
-%param.options.visualization.ylim = [-6.5,6.5]*0.1;
-param.options.visualization.xlim = [-7,7]*0.1;
-param.options.visualization.ylim = [-7,7]*0.1;
-param.options.visualization.zlim = [-0.1,4.5]*0.1;
-
-param.options.visualization.view = [-42,35];
-param.options.visualization.figure_size = [7, 7];
-param.options.visualization.show_contact = false; 
-param.options.visualization.frame_size = [0.1,0.01]; 
-param.options.visualization.is_export=true; 
+% Set options for visualization
+param.options.visualization.xlim = [-0.7,0.7]; % m
+param.options.visualization.ylim = [-0.7,0.7]; % m
+param.options.visualization.zlim = [-0.01,0.45]; % m
+param.options.visualization.view = [-42,35]; % [az, el]
+param.options.visualization.figure_size = [7, 7]; % inches
+param.options.visualization.show_contact = true; % Option to show contact location over time in space frame {s} 
+param.options.visualization.frame_size = [0.1,0.01]; % length and radius of coordinate frame axes (m)
+param.options.visualization.is_export=false; % Export video of the animation? 
 if param.options.is_inclined
-    param.options.visualization.export_figure_name='plate_ball_spin_inclined2';
+    param.options.visualization.export_figure_name='plate_ball_spin_inclined';
 else
-    param.options.visualization.export_figure_name='plate_ball_spin2';
+    param.options.visualization.export_figure_name='plate_ball_spin';
 end
+
 % Run visualiztion
 visualize_trajectory(param)
 
@@ -137,8 +130,6 @@ visualize_trajectory(param)
 % 6. Analyze Results 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 6.1
-% TODO: 
-% - Remove extra scrp code from the end 
 analyze_rolling_trajectory(param, param.sim.states_t)
 
 
@@ -152,7 +143,7 @@ param.sim.analytical_comparison = compare_plate_ball_to_analytical_solution(para
 
 
 %% 7. End program
-toc
+toc % Print elaped time 
 
 
 
