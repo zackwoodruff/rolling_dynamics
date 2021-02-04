@@ -181,8 +181,8 @@ end
 %% Derive full rolling dynamics (Equation 12)
 % Solve explicitly for the alpha and wrench terms from equations (8)/(9)
 % WARNING: May require a large symbolic matrix inversion, can be avoided
-% by settingL 
-%   param.options.is_fast_dynamics = true
+% by setting:
+%   param.options.is_partial_dynamics = true
 
 % States (22): 
 %  s = [theta, beta, gamma, ...                 % Phi_sh (1:3) - euler orientation {h} in {s} 
@@ -194,7 +194,7 @@ end
 %
 % ds = K7_(s) + K8_(s) * dVsh_
     
-if ~param.options.is_fast_dynamics
+if ~param.options.is_partial_dynamics
     % Equation: alpha_lambda = velTerms + accTerms*dVsh_
     invK5_ = inv(K5_);
     velTerms = invK5_* K6_; 
@@ -267,7 +267,7 @@ param.dynamics.K6_ = K6_;
 param.dynamics.Ad_Toh_ = Ad_Toh_;
 
 % Full dynamic rolling equations from Eq. (12) 
-if ~param.options.is_fast_dynamics
+if ~param.options.is_partial_dynamics
     param.dynamics.full_dynamics_ = full_dynamics_;
     param.dynamics.F_contact_ = F_contact_;
 end

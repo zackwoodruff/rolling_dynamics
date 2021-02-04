@@ -22,7 +22,7 @@ syms t_ real
 states_ = param.variables.states_;
 controls_ = param.variables.dVsh_;
 
-if param.options.is_fast_dynamics
+if param.options.is_partial_dynamics
     % Export functions for fast dynamics
     % This method avoids a large symbolic matrix inversion
     q_ = param.variables.q_;
