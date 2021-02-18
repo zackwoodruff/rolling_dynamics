@@ -2,11 +2,11 @@
 rolling_dynamics is a matlab library for simulating rolling dynamics between two rigid bodies. It is supplemental code to accompany the paper:
 J. Z. Woodruff and K. M Lynch, "Robotic Contact Juggling" (manuscript in preparation). 
 
-## What should it be used for? 
+## What can it be used for? 
 This code simulates rolling contacts between two rigid bodies when the surfaces can be orthogonally parameterized. 
 
 ## Installation
-This code was developed and tested on MATLAB version 2018b, and there are no other dependncies. To install simply clone or download the repository. 
+This code was developed and tested on MATLAB version 2018b, and there are no other dependencies. To install simply clone or download the repository. 
 
 ## Examples
 The examples are contained in the folder src/examples/
